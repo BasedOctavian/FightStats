@@ -9,10 +9,67 @@ import {
   orderBy,
   DocumentData,
   QueryDocumentSnapshot,
-  Timestamp
+  Timestamp,
+  limit
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Fighter, COLLECTIONS } from '../types/firestore';
+
+// Hook to fetch a fighter by fighterCode field
+export const useFighterByCode = (fighterCode: string | null) => {
+  const [fighter, setFighter] = useState<Fighter | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchFighterByCode = async () => {
+      if (!fighterCode) {
+        setFighter(null);
+        setLoading(false);
+        setError(null);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Create a query to find the fighter with matching fighterCode
+        const fighterQuery = query(
+          collection(db, COLLECTIONS.FIGHTERS),
+          where('fighterCode', '==', fighterCode),
+          limit(1)
+        );
+
+        const querySnapshot = await getDocs(fighterQuery);
+
+        if (!querySnapshot.empty) {
+          const fighterDoc = querySnapshot.docs[0];
+          const fighterData = fighterDoc.data();
+          setFighter({
+            ...fighterData,
+            id: fighterDoc.id,
+            createdAt: fighterData.createdAt instanceof Timestamp ? fighterData.createdAt.toDate() : fighterData.createdAt,
+            updatedAt: fighterData.updatedAt instanceof Timestamp ? fighterData.updatedAt.toDate() : fighterData.updatedAt,
+          } as Fighter);
+        } else {
+          setFighter(null);
+          setError('Fighter not found');
+        }
+      } catch (err) {
+        console.error('Error fetching fighter by code:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch fighter');
+        setFighter(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFighterByCode();
+  }, [fighterCode]);
+
+  return { fighter, loading, error };
+};
 
 // Hook to fetch a single fighter by fighterCode
 export const useFighter = (fighterCode: string | null) => {
@@ -157,35 +214,28 @@ export const useFightersByIds = (fighterCodes: string[]) => {
       setError(null);
 
       try {
+        // Create a query to get all fighters where fighterCode is in the provided array
+        const fightersQuery = query(
+          collection(db, COLLECTIONS.FIGHTERS),
+          where('fighterCode', 'in', fighterCodes)
+        );
+
+        const querySnapshot = await getDocs(fightersQuery);
         const fightersData: Fighter[] = [];
 
-        // Fetch each fighter individually since Firestore doesn't support 'in' queries efficiently
-        // for large arrays and we want to handle missing fighters gracefully
-        await Promise.all(
-          fighterCodes.map(async (fighterCode) => {
-            try {
-              const fighterDoc = doc(db, COLLECTIONS.FIGHTERS, fighterCode);
-              const fighterSnapshot = await getDoc(fighterDoc);
-
-              if (fighterSnapshot.exists()) {
-                const fighterData = fighterSnapshot.data();
-                fightersData.push({
-                  ...fighterData,
-                  id: fighterSnapshot.id,
-                  createdAt: fighterData.createdAt instanceof Timestamp ? fighterData.createdAt.toDate() : fighterData.createdAt,
-                  updatedAt: fighterData.updatedAt instanceof Timestamp ? fighterData.updatedAt.toDate() : fighterData.updatedAt,
-                } as Fighter);
-              }
-            } catch (err) {
-              console.warn(`Failed to fetch fighter ${fighterCode}:`, err);
-              // Continue with other fighters even if one fails
-            }
-          })
-        );
+        querySnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
+          const fighterData = doc.data();
+          fightersData.push({
+            ...fighterData,
+            id: doc.id,
+            createdAt: fighterData.createdAt instanceof Timestamp ? fighterData.createdAt.toDate() : fighterData.createdAt,
+            updatedAt: fighterData.updatedAt instanceof Timestamp ? fighterData.updatedAt.toDate() : fighterData.updatedAt,
+          } as Fighter);
+        });
 
         setFighters(fightersData);
       } catch (err) {
-        console.error('Error fetching fighters by IDs:', err);
+        console.error('Error fetching fighters by codes:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch fighters');
         setFighters([]);
       } finally {

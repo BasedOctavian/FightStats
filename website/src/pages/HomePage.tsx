@@ -132,7 +132,7 @@ const HomePage: React.FC = () => {
 
         {/* Features Section */}
         <Grid container spacing={4} sx={{ mb: 8 }}>
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid item xs={12} md={4}>
             <Card sx={{ height: '100%', textAlign: 'center' }}>
               <CardContent sx={{ py: 4 }}>
                 <Avatar 
@@ -163,7 +163,7 @@ const HomePage: React.FC = () => {
             </Card>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid item xs={12} md={4}>
             <Card sx={{ height: '100%', textAlign: 'center' }}>
               <CardContent sx={{ py: 4 }}>
                 <Avatar 
@@ -194,7 +194,7 @@ const HomePage: React.FC = () => {
             </Card>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid item xs={12} md={4}>
             <Card sx={{ height: '100%', textAlign: 'center' }}>
               <CardContent sx={{ py: 4 }}>
                 <Avatar 
@@ -245,7 +245,7 @@ const HomePage: React.FC = () => {
           </Box>
           
           <Grid container spacing={4} sx={{ textAlign: 'center' }}>
-            <Grid size={{ xs: 6, md: 3 }}>
+            <Grid item xs={6} md={3}>
               <Typography 
                 variant="h2" 
                 sx={{ 
@@ -260,7 +260,7 @@ const HomePage: React.FC = () => {
                 Active Fighters
               </Typography>
             </Grid>
-            <Grid size={{ xs: 6, md: 3 }}>
+            <Grid item xs={6} md={3}>
               <Typography 
                 variant="h2" 
                 sx={{ 
@@ -275,7 +275,7 @@ const HomePage: React.FC = () => {
                 Fights Tracked
               </Typography>
             </Grid>
-            <Grid size={{ xs: 6, md: 3 }}>
+            <Grid item xs={6} md={3}>
               <Typography 
                 variant="h2" 
                 sx={{ 
@@ -290,7 +290,7 @@ const HomePage: React.FC = () => {
                 Weight Classes
               </Typography>
             </Grid>
-            <Grid size={{ xs: 6, md: 3 }}>
+            <Grid item xs={6} md={3}>
               <Typography 
                 variant="h2" 
                 sx={{ 

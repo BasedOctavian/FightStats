@@ -23,7 +23,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onFighterSelect }) => {
   const [fighters, setFighters] = useState<Fighter[]>([]);
   const [filteredFighters, setFilteredFighters] = useState<Fighter[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(true);
   const searchRef = useRef<HTMLDivElement>(null);
   const theme = useTheme();
 
@@ -40,6 +40,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onFighterSelect }) => {
         
         setFighters(fighterData);
         setFilteredFighters(fighterData);
+        setShowDropdown(true);
       } catch (error) {
         console.error('Error fetching fighters:', error);
       } finally {
@@ -52,7 +53,12 @@ const SearchBar: React.FC<SearchBarProps> = ({ onFighterSelect }) => {
 
   useEffect(() => {
     if (searchTerm.trim() === '') {
-      setFilteredFighters(fighters);
+      // Show top 10 fighters by MinutesTracked when search is empty
+      const sortedFighters = [...fighters]
+        .filter(fighter => fighter.MinutesTracked && fighter.MinutesTracked > 0)
+        .sort((a, b) => (b.MinutesTracked || 0) - (a.MinutesTracked || 0))
+        .slice(0, 10);
+      setFilteredFighters(sortedFighters);
     } else {
       const filtered = fighters.filter(fighter =>
         fighter.fighterName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -115,7 +121,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onFighterSelect }) => {
         }}
       />
       
-      {showDropdown && filteredFighters.length > 0 && (
+      {showDropdown && !isLoading && filteredFighters.length > 0 && (
         <Paper
           elevation={8}
           sx={{
@@ -152,11 +158,18 @@ const SearchBar: React.FC<SearchBarProps> = ({ onFighterSelect }) => {
                     </Typography>
                   }
                   secondary={
-                    fighter.weightClass && (
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        {fighter.weightClass}
-                      </Typography>
-                    )
+                    <Box>
+                      {fighter.weightClass && (
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                          {fighter.weightClass}
+                        </Typography>
+                      )}
+                      {fighter.MinutesTracked && (
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                          {fighter.MinutesTracked} minutes tracked
+                        </Typography>
+                      )}
+                    </Box>
                   }
                 />
               </ListItem>
@@ -172,7 +185,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ onFighterSelect }) => {
                       fontStyle: 'italic'
                     }}
                   >
-                    Showing first 10 results. Type more to narrow search.
+                    {searchTerm.trim() === '' 
+                      ? 'Showing top 10 fighters by minutes tracked. Type to search for specific fighters.'
+                      : 'Showing first 10 results. Type more to narrow search.'
+                    }
                   </Typography>
                 </ListItemText>
               </ListItem>

@@ -25,6 +25,8 @@ export interface Fighter extends BaseDocument {
   team?: string;
   country?: string;
   imageUrl?: string;
+  Image?: string;  // Adding the Image field
+  weight?: string;  // Adding the weight field
   isActive?: boolean;
   
   // Additional fields from your actual data
@@ -91,24 +93,17 @@ export interface Fighter extends BaseDocument {
 
 // Fight data model
 export interface Fight extends BaseDocument {
-  fighter1Id: string;
-  fighter2Id: string;
-  fighter1Name: string;
-  fighter2Name: string;
-  eventName: string;
-  eventDate: Date;
+  actualRounds: number;
+  eventCode: string;
+  fightCode: string;
+  fighterA: string;
+  fighterB: string;
+  finalRoundTime: string;
+  gender: 'Male' | 'Female';
+  isTitleFight: 'Yes' | 'No';
+  methodOfFinish: 'KO' | 'TKO' | 'SUB' | 'DEC' | 'DQ' | 'NC';
+  scheduledRounds: number;
   weightClass: string;
-  rounds: number;
-  result: {
-    winner: 'fighter1' | 'fighter2' | 'draw' | 'noContest';
-    method: 'decision' | 'ko' | 'tko' | 'submission' | 'dqd' | 'draw' | 'noContest';
-    round?: number;
-    time?: string;
-  };
-  isMainEvent: boolean;
-  isTitleFight: boolean;
-  venue?: string;
-  location?: string;
 }
 
 // Fight statistics data model
@@ -157,15 +152,20 @@ export interface FightStats extends BaseDocument {
 }
 
 // Event data model
-export interface Event extends BaseDocument {
-  name: string;
-  date: Date;
-  venue: string;
-  location: string;
-  organization: string;
-  isMainCard: boolean;
-  fights: string[]; // Array of fight IDs
-  imageUrl?: string;
+export interface Event {
+  id: string;
+  Date: string;
+  EventCode: string;
+  EventName: string;
+  Fans: 'Yes' | 'No';
+  PPV: 'Yes' | 'No';
+  numOfFights: number;
+  // Keep lowercase versions for backward compatibility
+  date?: string;
+  eventCode?: string;
+  eventName?: string;
+  fans?: 'Yes' | 'No';
+  ppv?: 'Yes' | 'No';
 }
 
 // User preferences/data model
@@ -182,6 +182,153 @@ export interface UserProfile extends BaseDocument {
   };
 }
 
+export interface WeightClass {
+  id: string;
+  weight: number;
+  weightclassname: string;
+  // Submission attempts
+  AmericanaAttempts: number;
+  AnacondaAttempt: number;
+  CalfSlicerAttempts: number;
+  EzekielAttempt: number;
+  GogoplataAttempts: number;
+  KneebarAttempt: number;
+  LeglockAttempt: number;
+  NeckCrankAttempt: number;
+  OmoplataAttempt: number;
+  OtherSubAttempt: number;
+  SUBRNCAttempt: number;
+  SubArmTriangleAttempt: number;
+  SubAttempts: number;
+  SubDarceAttempt: number;
+  SubGuillotineAttempt: number;
+  SubHeelHookAttempt: number;
+  SubKimuraAttempt: number;
+  SubNeckCrankAttempt: number;
+  SubStraightArmLockAttempt: number;
+  SubSulovStretchAttempt: number;
+  SubTriangleArmbarAttempt: number;
+  SubTriangleAttempt: number;
+  TwisterAttempts: number;
+  VonFlueAttempt: number;
+  BulldogAttempt: number;
+
+  // Takedown attempts
+  AttemptedThrowTD: number;
+  BodyLockTakedownAttempts: number;
+  DoubleLegTakedownAttempts: number;
+  SingleLegTakedownAttempts: number;
+  TripTakedownAttempts: number;
+
+  // Strikes absorbed
+  BodyKicksAbsorbed: number;
+  HeadKicksAbsorbed: number;
+  HooksAbsorbed: number;
+  JabsAbsorbed: number;
+  LegKicksAbsorbed: number;
+  OverhandsAbsorbed: number;
+  StraightsAbsorbed: number;
+  UppercutsAbsorbed: number;
+
+  // Clinch strikes
+  ClinchStrikeHiMake: number;
+  ClinchStrikeLoMake: number;
+  TotalClinchStrikesMade: number;
+  TotalClinchStrikesThrown: number;
+
+  // Ground strikes
+  GroundStrikeHiMake: number;
+  GroundStrikeLoMake: number;
+  TotalGroundStrikesMade: number;
+  TotalGroundStrikesThrown: number;
+
+  // Left side strikes
+  LeftBodyKickMake: number;
+  LeftElbowMake: number;
+  LeftHighKickMake: number;
+  LeftHookHiMake: number;
+  LeftHookLoMake: number;
+  LeftJabHiMake: number;
+  LeftJabLoMake: number;
+  LeftLegKickMake: number;
+  LeftOverhandMake: number;
+  LeftSpinBackFistMake: number;
+  LeftStraightHiMake: number;
+  LeftStraightLoMake: number;
+  LeftUppercutHiMake: number;
+  LeftUppercutLoMake: number;
+
+  // Right side strikes
+  RightBodyKickMake: number;
+  RightElbowMake: number;
+  RightHighKickMake: number;
+  RightHookHiMake: number;
+  RightHookLoMake: number;
+  RightJabHiMake: number;
+  RightJabLoMake: number;
+  RightLegKickMake: number;
+  RightOverhandMake: number;
+  RightSpinBackFistMake: number;
+  RightStraightHiMake: number;
+  RightStraightLoMake: number;
+  RightUppercutHiMake: number;
+  RightUppercutLoMake: number;
+
+  // Total strikes
+  TotalBodyKicksMade: number;
+  TotalBodyKicksMake: number;
+  TotalBodyKicksThrown: number;
+  TotalElbowsMade: number;
+  TotalElbowsThrown: number;
+  TotalHighKicksMade: number;
+  TotalHighKicksThrown: number;
+  TotalHooksMade: number;
+  TotalHooksThrown: number;
+  TotalJabsMade: number;
+  TotalJabsThrown: number;
+  TotalKicksLanded: number;
+  TotalKicksThrown: number;
+  TotalLegKicksMade: number;
+  TotalLegKicksThrown: number;
+  TotalOverhandsMade: number;
+  TotalOverhandsThrown: number;
+  TotalPunchesLanded: number;
+  TotalPunchesThrown: number;
+  TotalSpinBackFistsMade: number;
+  TotalSpinBackFistsThrown: number;
+  TotalStraightsMade: number;
+  TotalStraightsThrown: number;
+  TotalStrikesLanded: number;
+  TotalUppercutsMade: number;
+  TotalUppercutsThrown: number;
+
+  // Win/Loss records
+  LossesVsOrthodox: number;
+  LossesVsSouthpaw: number;
+  LossesVsSwitch: number;
+  WinsVsOrthodox: number;
+  WinsVsSouthpaw: number;
+  WinsVsSwitch: number;
+  decloss: number;
+  decwin: number;
+  koloss: number;
+  kowins: number;
+  subloss: number;
+  subwin: number;
+  tkoloss: number;
+  tkowins: number;
+
+  // Fight statistics
+  fights: number;
+  minutes: number;
+  numberofknockdowns: number;
+  numberofstuns: number;
+  rounds: number;
+  subattempt: number;
+  timesknockeddown: number;
+  timesstunned: number;
+}
+
 // Collection names for type safety
 export const COLLECTIONS = {
   FIGHTERS: 'fighterData',
@@ -189,6 +336,7 @@ export const COLLECTIONS = {
   FIGHT_STATS: 'fightStats',
   EVENTS: 'events',
   USER_PROFILES: 'userProfiles',
+  WEIGHT_CLASSES: 'weightClass',
 } as const;
 
 // Type for collection names

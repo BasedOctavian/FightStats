@@ -1,0 +1,365 @@
+Category: GENERAL STATS USED IN FORMULAS AND SUCH
+IN MAIN DOC NOT IN SEPERATE OBJECT 
+FightsTracked - int - The amount of fights we have tracked
+MinutesTracked - int - The amount of minutes we have tracked
+RoundsTracked - int - The amount of rounds we have tracked
+
+
+Category: Cage position stats - these are tracked twice per round with a point given to where they spent most time
+IN MAIN DOC NOT IN SEPERATE OBJECT 
+CenterOctagon - int - Number of times tracked in the center neautral position in octagon
+PushedBackToCage - int - Number of times when they were walked down
+PushingAgainstCage - int - Number of time when they walked opponent down
+in clinch_stats object
+BeingClinched - int - Number of times the opponent clinched them
+InClinch - int - Number of times they controlled the clinch
+in ground_stats object
+OnBottomGround - int - Number of times they were on the bottom in ground exchanges
+OnTopGround - int - Number of times they were on top in ground exchanges
+
+Category: Clinch Stats
+In clinch_stats object
+ClinchStrikeHiMake - int - Times they landed a strike to the head while in the clinch
+ClinchStrikeHiMiss  - int - Times they missed a strike to the head while in the clinch
+ClinchStrikeLoMake - int - Times they landed a strike to the body while in the clinch
+ClinchStrikeLoMiss - int - Times they missed a strike to the body while in the clinch
+TotalClinchStrikesMade - int - Total strikes landed in the clinch
+TotalClinchStrikesMissed - int - Total strikes missed while in the clinch
+TotalClinchStrikesThrown - int - Total strikes thrown while in the clinch
+
+Category: Defensive Stats
+In defensive_stats object
+TimesAnklePicked – int - Times they were taken down via an ankle pick
+TimesBodyLocked – int - Times they were taken down via a body lock
+TimesDoubleLegged – int - Times they were taken down via a double leg
+TimesImanaried – int - Times they were taken down via a Imanari
+TimesKnockedDown – int - Times they were knocked down by the opponent
+TimesSingleLegged – int - Times they were taken down via a single leg
+TimesStunned – int - Times they were stunned by the opponent
+TimesThrown – int - Times they were taken down via a throw
+TimesTripped – int - Times they were taken down via a trip
+
+Category: Fight Outcome Stats
+In fight_outcome_stats object
+FighterDraw – int - Times a fight ended in a draw
+FighterKOLoss – int - Times they lost a fight by Knockout
+FighterKOWins – int - Times they won a fight by KO
+FighterLoss – int - Times they lost a fight
+FighterMajDecLoss – int - Times they lost a fight by majority decision
+FighterMajDecWin – int - Times they won a fight by majority decision
+FighterNC – int - Times a fight ended in a No contest
+FighterSUBLoss – int - Times they lost a fight by submission
+FighterSUBWin – int - Times they won a fight by submission
+FighterSplitDecLoss – int - Times they lost a fight by split decision
+FighterSplitDecWin – int - Times they won a fight by split decision
+FighterTKOLoss – int - Times they lost a fight by TKO
+FighterTKOWins – int - Times they won a fight by TKO
+FighterUDLoss – int - Times they lost a fight by unanimous decision
+FighterUDWins – int - Times they won a fight by unanimous decision
+FighterWins – int - Times they won a fight
+LossesInThe4thRd – int - Times they lost a fight while in the 4th round
+LossesInThe5thRd – int - Times they lost a fight in the 5th and final round
+LossesInTitleFights – int - Times they lost a title fight
+WinsInThe4thRd – int - Times they won a fight while in the 4th round
+WinsInThe5thRd – int - Times they won a fight while in the 5th and final round
+WinsInTitleFights – int - Times they won a title fight
+
+Category: Gameplan Stats
+In gameplan_stats object
+GrapplingGameplanLoss – int - Times they had a grappling gameplan and lost
+GrapplingGameplanWins – int - Times they had a grappling gameplan and won
+GrapplingGameplans – int - Times they had a grappling gameplan
+StrikingGameplanLoss – int - Times they had a striking gameplan and lost
+StrikingGameplanWins – int - Times they had a striking gameplan and won
+StrikingGameplans – int - Times they had a striking gameplan 
+
+Category: Ground Stats
+In ground_stats object
+GroundStrikeHiMake – int - Strikes to the head while on the ground that landed
+GroundStrikeHiMiss – int - Strikes to the head while on the ground that missed
+GroundStrikeLoMake – int - Strikes to the body while on the ground that landed
+GroundStrikeLoMiss – int - Strikes to the body while on the ground that missed
+TotalGroundStrikesMade – int - Total strikes landed while on the ground
+TotalGroundStrikesMissed – int - Total strikes missed while on the ground
+TotalGroundStrikesThrown – int - Total strikes thrown while on the ground
+
+Category: Knockout Stats
+In knockout_stats object
+KnockoutLossviaBodyKick – int - Number of knockout losses via body kick
+KnockoutLossviaBodyShot – int - Number of knockout losses via body punch
+KnockoutLossviaHeadKick – int - Number of knockout losses via head kick
+KnockoutLossviaHook – int - Number of knockout losses via hook
+KnockoutLossviaJab – int - Number of knockout losses via jab
+KnockoutLossviaLegKick – int - Number of knockout losses via leg kick
+KnockoutLossviaStraight – int - Number of knockout losses via straight punch
+KnockoutLossviaUppercut – int - Number of knockout losses via uppercut
+KnockoutWinviaLeftElbow – int - Number of knockout wins via left elbow
+KnockoutWinviaLeftFoot – int - Number of knockout wins via left foot
+KnockoutWinviaLeftHand – int - Number of knockout wins via left hand
+KnockoutWinviaLeftKnee – int - Number of knockout wins via left knee
+KnockoutWinviaRightElbow – int - Number of knockout wins via right elbow
+KnockoutWinviaRightFoot – int - Number of knockout wins via right foot
+KnockoutWinviaRightHand – int - Number of knockout wins via right hand
+KnockoutWinviaRightKnee – int - Number of knockout wins via right knee
+
+Category: Left Hand Stats
+In left_hand_stats object
+LeftBodyKickMake – int - Left side body kicks that landed
+LeftBodyKickMiss – int - Left side body kicks that missed
+LeftCrossAttempts – int - Left cross punch attempts
+LeftCrossMake – int - Left cross punches that landed
+LeftCrossMissed – int - Left cross punches that missed
+LeftElbowMake – int - Left elbow strikes that landed
+LeftElbowMiss – int - Left elbow strikes that missed
+LeftHighKickMake – int - Left high kicks that landed
+LeftHighKickMiss – int - Left high kicks that missed
+LeftHookHiMake – int - Left hooks to the head that landed
+LeftHookHiMiss – int - Left hooks to the head that missed
+LeftHookLoMake – int - Left hooks to the body that landed
+LeftHookLoMiss – int - Left hooks to the body that missed
+LeftJabHiMake – int - Left jabs to the head that landed
+LeftJabHiMiss – int - Left jabs to the head that missed
+LeftJabLoMake – int - Left jabs to the body that landed
+LeftJabLoMiss – int - Left jabs to the body that missed
+LeftLegKickMake – int - Left leg kicks that landed
+LeftLegKickMiss – int - Left leg kicks that missed
+LeftOverhandMake – int - Left overhand punches that landed
+LeftOverhandMiss – int - Left overhand punches that missed
+LeftSpinBackFistMake – int - Left spin back fist strikes that landed
+LeftSpinBackFistMiss – int - Left spin back fist strikes that missed
+LeftStraightHiMake – int - Left straight punches to the head that landed
+LeftStraightHiMiss – int - Left straight punches to the head that missed
+LeftStraightLoMake – int - Left straight punches to the body that landed
+LeftStraightLoMiss – int - Left straight punches to the body that missed
+LeftUppercutHiMake – int - Left uppercuts to the head that landed
+LeftUppercutHiMiss – int - Left uppercuts to the head that missed
+LeftUppercutLoMake – int - Left uppercuts to the body that landed
+LeftUppercutLoMiss – int - Left uppercuts to the body that missed
+
+Category: Right Hand Stats
+In right_hand_stats object
+RightBodyKickMake – int - Right side body kicks that landed
+RightBodyKickMiss – int - Right side body kicks that missed
+RightCrossAttempts – int - Right cross punch attempts
+RightCrossMake – int - Right cross punches that landed
+RightCrossMissed – int - Right cross punches that missed
+RightElbowMake – int - Right elbow strikes that landed
+RightElbowMiss – int - Right elbow strikes that missed
+RightHighKickMake – int - Right high kicks that landed
+RightHighKickMiss – int - Right high kicks that missed
+RightHookHiMake – int - Right hooks to the head that landed
+RightHookHiMiss – int - Right hooks to the head that missed
+RightHookLoMake – int - Right hooks to the body that landed
+RightHookLoMiss – int - Right hooks to the body that missed
+RightJabHiMake – int - Right jabs to the head that landed
+RightJabHiMiss – int - Right jabs to the head that missed
+RightJabLoMake – int - Right jabs to the body that landed
+RightJabLoMiss – int - Right jabs to the body that missed
+RightLegKickMake – int - Right leg kicks that landed
+RightLegKickMiss – int - Right leg kicks that missed
+RightOverhandMake – int - Right overhand punches that landed
+RightOverhandMiss – int - Right overhand punches that missed
+RightSpinBackFistMake – int - Right spin back fist strikes that landed
+RightSpinBackFistMiss – int - Right spin back fist strikes that missed
+RightStraightHiMake – int - Right straight punches to the head that landed
+RightStraightHiMiss – int - Right straight punches to the head that missed
+RightStraightLoMake – int - Right straight punches to the body that landed
+RightStraightLoMiss – int - Right straight punches to the body that missed
+RightUppercutHiMake – int - Right uppercuts to the head that landed
+RightUppercutHiMiss – int - Right uppercuts to the head that missed
+RightUppercutLoMake – int - Right uppercuts to the body that landed
+RightUppercutLoMiss – int - Right uppercuts to the body that missed
+
+Category: Round Stats
+In round_stats object
+Round1StrikesLanded – int - Number of strikes landed in Round 1
+Round1StrikesThrown – int - Number of strikes thrown in Round 1
+Round2StrikesLanded – int - Number of strikes landed in Round 2
+Round2StrikesThrown – int - Number of strikes thrown in Round 2
+Round3StrikesLanded – int - Number of strikes landed in Round 3
+Round3StrikesThrown – int - Number of strikes thrown in Round 3
+Round4StrikesLanded – int - Number of strikes landed in Round 4
+Round4StrikesThrown – int - Number of strikes thrown in Round 4
+Round5StrikesLanded – int - Number of strikes landed in Round 5
+Round5StrikesThrown – int - Number of strikes thrown in Round 5
+
+Category: Stance Matchup Stats
+In stance_matchup_stats object
+LossesVsOrthodox – int - Losses against fighters with orthodox stance
+LossesVsSouthpaw – int - Losses against fighters with southpaw stance
+LossesVsSwitch – int - Losses against fighters with switch stance
+OrthodoxLosses – int - Losses while fighting in orthodox stance
+OrthodoxWins – int - Wins while fighting in orthodox stance
+SouthpawLosses – int - Losses while fighting in southpaw stance
+SouthpawWins – int - Wins while fighting in southpaw stance
+SwitchLosses – int - Losses while fighting in switch stance
+SwitchWins – int - Wins while fighting in switch stance
+WinsVsOrthodox – int - Wins against fighters with orthodox stance
+WinsVsSouthpaw – int - Wins against fighters with southpaw stance
+WinsVsSwitch – int - Wins against fighters with switch stance
+
+Category: Striking Stats
+In striking_stats object
+BodyKicksAbsorbed – int - Number of body kicks absorbed
+CrossesAbsorbed – int - Number of crosses absorbed
+HeadKicksAbsorbed – int - Number of head kicks absorbed
+HooksAbsorbed – int - Number of hooks absorbed
+JabsAbsorbed – int - Number of jabs absorbed
+LegKicksAbsorbed – int - Number of leg kicks absorbed
+OverhandsAbsorbed – int - Number of overhand punches absorbed
+StraightsAbsorbed – int - Number of straight punches absorbed
+UppercutsAbsorbed – int - Number of uppercuts absorbed
+
+Category: Submission Stats
+In submission_stats object
+AmericanaAttempts – int - Number of Americana submission attempts
+AmericanaLosses – int - Number of Americana submission losses
+AmericanaWins – int - Number of Americana submission wins
+AnacondaAttempt – int - Number of Anaconda choke attempts
+AnacondaLoss – int - Number of Anaconda choke losses
+AnacondaWin – int - Number of Anaconda choke wins
+BulldogAttempt – int - Number of Bulldog choke attempts
+BulldogLoss – int - Number of Bulldog choke losses
+BulldogWin – int - Number of Bulldog choke wins
+CalfSlicerAttempts – int - Number of Calf slicer submission attempts
+CalfSlicerLosses – int - Number of Calf slicer submission losses
+CalfSlicerWins – int - Number of Calf slicer submission wins
+EzekielAttempt – int - Number of Ezekiel choke attempts
+EzekielLoss – int - Number of Ezekiel choke losses
+EzekielWin – int - Number of Ezekiel choke wins
+GogoplataAttempts – int - Number of Gogoplata choke attempts
+GogoplataLosses – int - Number of Gogoplata choke losses
+GogoplataWins – int - Number of Gogoplata choke wins
+KneebarAttempt – int - Number of Kneebar submission attempts
+KneebarLoss – int - Number of Kneebar submission losses
+KneebarWin – int - Number of Kneebar submission wins
+LeglockAttempt – int - Number of Leglock submission attempts
+LeglockLoss – int - Number of Leglock submission losses
+LeglockWin – int - Number of Leglock submission wins
+NeckCrankAttempt – int - Number of Neck crank submission attempts
+OmoplataAttempt – int - Number of Omoplata submission attempts
+OmoplataAttempts – int - Number of Omoplata submission attempts (duplicate field)
+OmoplataLoss – int - Number of Omoplata submission losses
+OmoplataLosses – int - Number of Omoplata submission losses (duplicate field)
+OmoplataWin – int - Number of Omoplata submission wins
+OmoplataWins – int - Number of Omoplata submission wins (duplicate field)
+OtherSubAttempt – int - Number of other submission attempts
+OtherSubLoss – int - Number of other submission losses
+OtherSubWin – int - Number of other submission wins
+SUBRNCAttempt – int - Number of rear naked choke attempts
+SUBRNCLoss – int - Number of rear naked choke losses
+SUBRNCWin – int - Number of rear naked choke wins
+SubArmTriangleAttempt – int - Number of arm triangle submission attempts
+SubArmTriangleLoss – int - Number of arm triangle submission losses
+SubArmTriangleWin – int - Number of arm triangle submission wins
+SubAttempts – int - Total submission attempts
+SubDarceAttempt – int - Number of Darce choke submission attempts
+SubDarceLoss – int - Number of Darce choke submission losses
+SubDarceWin – int - Number of Darce choke submission wins
+SubGuillotineAttempt – int - Number of guillotine choke submission attempts
+SubGuillotineLoss – int - Number of guillotine choke submission losses
+SubGuillotineWin – int - Number of guillotine choke submission wins
+SubHeelHookAttempt – int - Number of heel hook submission attempts
+SubHeelHookLoss – int - Number of heel hook submission losses
+SubHeelHookWin – int - Number of heel hook submission wins
+SubKimuraAttempt – int - Number of Kimura submission attempts
+SubKimuraLoss – int - Number of Kimura submission losses
+SubKimuraWin – int - Number of Kimura submission wins
+SubNeckCrankAttempt – int - Number of neck crank submission attempts
+SubNeckCrankWin – int - Number of neck crank submission wins
+SubStraightArmLockAttempt – int - Number of straight arm lock submission attempts
+SubStraightArmLockLoss – int - Number of straight arm lock submission losses
+SubStraightArmLockWin – int - Number of straight arm lock submission wins
+SubSulovStretchAttempt – int - Number of Sulov stretch submission attempts
+SubSulovStretchLoss – int - Number of Sulov stretch submission losses
+SubSulovStretchWin – int - Number of Sulov stretch submission wins
+SubTriangleArmbarAttempt – int - Number of triangle armbar submission attempts
+SubTriangleArmbarLoss – int - Number of triangle armbar submission losses
+SubTriangleArmbarWin – int - Number of triangle armbar submission wins
+SubTriangleAttempt – int - Number of triangle choke submission attempts
+SubTriangleLoss – int - Number of triangle choke submission losses
+SubTriangleWin – int - Number of triangle choke submission wins
+TwisterAttempts – int - Number of twister submission attempts
+TwisterLosses – int - Number of twister submission losses
+TwisterWins – int - Number of twister submission wins
+VonFlueAttempt – int - Number of Von Flue choke submission attempts
+VonFlueLoss – int - Number of Von Flue choke submission losses
+VonFlueWin – int - Number of Von Flue choke submission wins
+
+
+
+Category: Takedown Stats
+In takedown_stats object
+AnklePickDefends – int - Number of times defended against ankle pick takedown
+AttemptedAnklePickTD – int - Number of ankle pick takedown attempts
+AttemptedImanariTD – int - Number of Imanari roll takedown attempts
+AttemptedThrowTD – int - Number of throw takedown attempts
+BodyLockDefends – int - Number of times defended against body lock takedown
+BodyLockTakedownAttempts – int - Number of body lock takedown attempts
+BodyLockTakedownFail – int - Number of failed body lock takedown attempts
+BodyLockTakedownSuccess – int - Number of successful body lock takedowns
+DoubleLegDefends – int - Number of times defended against double leg takedown
+DoubleLegTakedownAttempts – int - Number of double leg takedown attempts
+DoubleLegTakedownFail – int - Number of failed double leg takedown attempts
+DoubleLegTakedownSuccess – int - Number of successful double leg takedowns
+FailedAnklePickTD – int - Number of failed ankle pick takedown attempts
+FailedImanariTD – int - Number of failed Imanari roll takedown attempts
+FailedThrowTD – int - Number of failed throw takedown attempts
+ImanariDefends – int - Number of times defended against Imanari roll takedown
+SingleLegDefends – int - Number of times defended against single leg takedown
+SingleLegTakedownAttempts – int - Number of single leg takedown attempts
+SingleLegTakedownFail – int - Number of failed single leg takedown attempts
+SingleLegTakedownSuccess – int - Number of successful single leg takedowns
+SuccessfulAnklePickTD – int - Number of successful ankle pick takedowns
+SuccessfulImanariTD – int - Number of successful Imanari roll takedowns
+SuccessfulThrowTD – int - Number of successful throw takedowns
+ThrowDefends – int - Number of times defended against throw takedown
+TripDefends – int - Number of times defended against trip takedown
+TripTakedownAttempts – int - Number of trip takedown attempts
+TripTakedownFail – int - Number of failed trip takedown attempts
+TripTakedownSuccess – int - Number of successful trip takedowns
+
+Category: Total Stats
+In total_stats object
+TotalBodyKicksMade – int - Total body kicks landed
+TotalBodyKicksMissed – int - Total body kicks missed
+TotalBodyKicksThrown – int - Total body kicks thrown
+TotalCrossAttempts – int - Total cross punch attempts
+TotalCrossMake – int - Total cross punches landed
+TotalCrossMissed – int - Total cross punches missed
+TotalElbowsMade – int - Total elbows landed
+TotalElbowsMissed – int - Total elbows missed
+TotalElbowsThrown – int - Total elbows thrown
+TotalHighKicksMade – int - Total high kicks landed
+TotalHighKicksMissed – int - Total high kicks missed
+TotalHighKicksThrown – int - Total high kicks thrown
+TotalHooksMade – int - Total hooks landed
+TotalHooksMissed – int - Total hooks missed
+TotalHooksThrown – int - Total hooks thrown
+TotalJabsMade – int - Total jabs landed
+TotalJabsMissed – int - Total jabs missed
+TotalJabsThrown – int - Total jabs thrown
+TotalKicksLanded – int - Total kicks landed
+TotalKicksThrown – int - Total kicks thrown
+TotalLegKicksMade – int - Total leg kicks landed
+TotalLegKicksMissed – int - Total leg kicks missed
+TotalLegKicksThrown – int - Total leg kicks thrown
+TotalOverhandsMade – int - Total overhand punches landed
+TotalOverhandsMissed – int - Total overhand punches missed
+TotalOverhandsThrown – int - Total overhand punches thrown
+TotalPunchesLanded – int - Total punches landed
+TotalPunchesThrown – int - Total punches thrown
+TotalSpinBackFistsMade – int - Total spin back fists landed
+TotalSpinBackFistsMissed – int - Total spin back fists missed
+TotalSpinBackFistsThrown – int - Total spin back fists thrown
+TotalStraightsMade – int - Total straight punches landed
+TotalStraightsMissed – int - Total straight punches missed
+TotalStraightsThrown – int - Total straight punches thrown
+TotalStrikesLanded – int - Total strikes landed (all types)
+TotalUppercutsMade – int - Total uppercuts landed
+TotalUppercutsMissed – int - Total uppercuts missed
+TotalUppercutsThrown – int - Total uppercuts thrown
+
+
+
+
