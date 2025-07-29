@@ -12,15 +12,13 @@ interface GrapplingInfoProps {
 }
 
 const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgData }): JSX.Element => {
-  // Use the hook to get takedown rating calculation
-  const { calculateTakedownRating } = useBasicInfo(fighter, weightClassAvgData);
-  
   // State for managing collapsed sections
   const [collapsedSections, setCollapsedSections] = React.useState({
     overallGrappling: false,
     grapplingRating: false,
     groundGame: false,
     submissions: false,
+    clinch: false,
   });
 
   const toggleSection = (section: keyof typeof collapsedSections) => {
@@ -32,11 +30,10 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
 
 
 
-  // Calculate takedown rating
-  const takedownRating = calculateTakedownRating();
+
   
   // Use the grappling hook to get calculated data
-  const { topTakedowns } = useGrapplingInfo(fighter);
+  const { topTakedowns, topTakedownVulnerabilities } = useGrapplingInfo(fighter);
 
   // Calculate ground control percentage
   const groundControlPercentage = React.useMemo(() => {
@@ -75,6 +72,164 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
     
     return groundStrikesMade / roundsTracked;
   }, [fighter.ground_stats?.TotalGroundStrikesMade, fighter.RoundsTracked]);
+
+  // Calculate clinch control percentage
+  const clinchControlPercentage = React.useMemo(() => {
+    const inClinch = fighter.clinch_stats?.InClinch || 0;
+    const beingClinched = fighter.clinch_stats?.BeingClinched || 0;
+    const totalClinchTime = inClinch + beingClinched;
+    
+    if (totalClinchTime === 0) return 0;
+    return (inClinch / totalClinchTime) * 100;
+  }, [fighter.clinch_stats?.InClinch, fighter.clinch_stats?.BeingClinched]);
+
+  // Calculate clinch striking accuracy
+  const clinchStrikingAccuracy = React.useMemo(() => {
+    const clinchStrikesMade = fighter.clinch_stats?.TotalClinchStrikesMade || 0;
+    const clinchStrikesThrown = fighter.clinch_stats?.TotalClinchStrikesThrown || 0;
+    
+    if (clinchStrikesThrown === 0) return 0;
+    return (clinchStrikesMade / clinchStrikesThrown) * 100;
+  }, [fighter.clinch_stats?.TotalClinchStrikesMade, fighter.clinch_stats?.TotalClinchStrikesThrown]);
+
+  // Calculate weight class clinch striking accuracy
+  const weightClassClinchStrikingAccuracy = React.useMemo(() => {
+    if (!weightClassAvgData) return 0;
+    
+    const weightClassClinchStrikesMade = weightClassAvgData.TotalClinchStrikesMade || 0;
+    const weightClassClinchStrikesThrown = weightClassAvgData.TotalClinchStrikesThrown || 0;
+    
+    if (weightClassClinchStrikesThrown === 0) return 0;
+    return (weightClassClinchStrikesMade / weightClassClinchStrikesThrown) * 100;
+  }, [weightClassAvgData]);
+
+  // Calculate clinch strikes landed per round
+  const clinchStrikesPerRound = React.useMemo(() => {
+    const clinchStrikesMade = fighter.clinch_stats?.TotalClinchStrikesMade || 0;
+    const roundsTracked = fighter.RoundsTracked || 1;
+    
+    return clinchStrikesMade / roundsTracked;
+  }, [fighter.clinch_stats?.TotalClinchStrikesMade, fighter.RoundsTracked]);
+
+  // Calculate weight class clinch strikes per round
+  const weightClassClinchStrikesPerRound = React.useMemo(() => {
+    if (!weightClassAvgData) return 0;
+    
+    const weightClassClinchStrikesMade = weightClassAvgData.TotalClinchStrikesMade || 0;
+    const weightClassRounds = weightClassAvgData.rounds || 1;
+    
+    return weightClassClinchStrikesMade / weightClassRounds;
+  }, [weightClassAvgData]);
+
+  // Calculate clinch rating based on control, accuracy, and volume
+  const clinchRating = React.useMemo(() => {
+    // Helper function to normalize values to 1-99 scale
+    const normalizeValue = (fighterValue: number, weightClassValue: number) => {
+      if (weightClassValue === 0) {
+        // If no weight class data, use simple normalization
+        const maxValue = Math.max(fighterValue, 1);
+        return Math.min(99, Math.max(1, (fighterValue / maxValue) * 99));
+      }
+      
+      // Calculate percentage relative to weight class average
+      const percentage = (fighterValue / weightClassValue) * 100;
+      
+      // Convert to 1-99 scale
+      // 50% = 25 rating (below average)
+      // 100% = 50 rating (average)
+      // 150% = 75 rating (above average)
+      // 200%+ = 99 rating (exceptional)
+      let rating = 50 + (percentage - 100) * 0.5;
+      
+      // Cap between 1 and 99
+      return Math.min(99, Math.max(1, rating));
+    };
+
+    // Calculate individual component ratings
+    const clinchControlRating = normalizeValue(clinchControlPercentage, 50); // 50% as baseline
+    const clinchAccuracyRating = normalizeValue(clinchStrikingAccuracy, weightClassClinchStrikingAccuracy);
+    const clinchVolumeRating = normalizeValue(clinchStrikesPerRound, weightClassClinchStrikesPerRound);
+    
+    // Combine all three metrics for overall clinch rating
+    // Weight control more heavily as it's fundamental to clinch effectiveness
+    const overallClinchRating = (clinchControlRating * 0.4) + (clinchAccuracyRating * 0.3) + (clinchVolumeRating * 0.3);
+    
+    return overallClinchRating;
+  }, [clinchControlPercentage, clinchStrikingAccuracy, clinchStrikesPerRound, weightClassClinchStrikingAccuracy, weightClassClinchStrikesPerRound]);
+
+  // Calculate takedown rating based on success rate and volume
+  const takedownRating = React.useMemo(() => {
+    const takedownStats = fighter.takedown_stats;
+    if (!takedownStats || !weightClassAvgData) return 50; // Default to average if no data
+
+    // Calculate fighter's total takedown attempts and successes
+    const fighterAttempts = (
+      (takedownStats.BodyLockTakedownAttempts || 0) +
+      (takedownStats.DoubleLegTakedownAttempts || 0) +
+      (takedownStats.SingleLegTakedownAttempts || 0) +
+      (takedownStats.TripTakedownAttempts || 0) +
+      (takedownStats.AttemptedAnklePickTD || 0) +
+      (takedownStats.AttemptedThrowTD || 0) +
+      (takedownStats.AttemptedImanariTD || 0)
+    );
+
+    const fighterSuccesses = (
+      (takedownStats.BodyLockTakedownSuccess || 0) +
+      (takedownStats.DoubleLegTakedownSuccess || 0) +
+      (takedownStats.SingleLegTakedownSuccess || 0) +
+      (takedownStats.TripTakedownSuccess || 0) +
+      (takedownStats.SuccessfulAnklePickTD || 0) +
+      (takedownStats.SuccessfulThrowTD || 0) +
+      (takedownStats.SuccessfulImanariTD || 0)
+    );
+
+    // Calculate weight class takedown attempts 
+    const weightClassAttempts = (
+      (weightClassAvgData.BodyLockTakedownAttempts || 0) +
+      (weightClassAvgData.DoubleLegTakedownAttempts || 0) +
+      (weightClassAvgData.SingleLegTakedownAttempts || 0) +
+      (weightClassAvgData.TripTakedownAttempts || 0) +
+      (weightClassAvgData.AttemptedThrowTD || 0)
+    );
+
+    // Use UFC average success rate as baseline (38%)
+    const ufcAverageSuccessRate = 0.38;
+
+    // Prevent division by zero
+    if (fighterAttempts === 0 && weightClassAttempts === 0) return 50;
+    
+    // Calculate fighter success rate
+    const fighterSuccessRate = fighterAttempts > 0 ? fighterSuccesses / fighterAttempts : 0;
+
+    // Calculate attempts per fight to factor in takedown frequency
+    const fighterFights = fighter.FightsTracked || 1;
+    const weightClassFights = weightClassAvgData.fights || 1;
+    
+    const fighterAttemptsPerFight = fighterAttempts / fighterFights;
+    const weightClassAttemptsPerFight = weightClassAttempts / weightClassFights;
+
+    // Prevent division by zero for frequency ratio
+    if (weightClassAttemptsPerFight === 0) {
+      // If no weight class data, base rating purely on fighter's success rate vs UFC average
+      const simpleRatio = fighterSuccessRate / ufcAverageSuccessRate;
+      const rating = 50 + (50 * Math.tanh((simpleRatio - 1) * 2));
+      return Math.min(100, Math.max(1, Math.round(rating)));
+    }
+
+    // Calculate ratios compared to baselines
+    const successRateRatio = fighterSuccessRate / ufcAverageSuccessRate;
+    const frequencyRatio = fighterAttemptsPerFight / weightClassAttemptsPerFight;
+
+    // Combine success rate (70%) and frequency (30%) with weights
+    const combinedRatio = (successRateRatio * 0.7) + (frequencyRatio * 0.3);
+
+    // Convert to 1-100 scale with 50 as average
+    // Using tanh to create a smooth curve
+    const rating = 50 + (50 * Math.tanh((combinedRatio - 1) * 2));
+
+    // Ensure rating stays within 1-100 bounds
+    return Math.min(100, Math.max(1, Math.round(rating)));
+  }, [fighter, weightClassAvgData]);
 
   // Custom tooltip component for the radar chart
   const CustomTooltip = ({ active, payload }: any) => {
@@ -146,6 +301,42 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
     return weightClassGroundStrikesMade / weightClassRounds;
   }, [weightClassAvgData]);
 
+  // Calculate ground game rating based on control, accuracy, and volume
+  const groundGameRating = React.useMemo(() => {
+    // Helper function to normalize values to 1-99 scale
+    const normalizeValue = (fighterValue: number, weightClassValue: number) => {
+      if (weightClassValue === 0) {
+        // If no weight class data, use simple normalization
+        const maxValue = Math.max(fighterValue, 1);
+        return Math.min(99, Math.max(1, (fighterValue / maxValue) * 99));
+      }
+      
+      // Calculate percentage relative to weight class average
+      const percentage = (fighterValue / weightClassValue) * 100;
+      
+      // Convert to 1-99 scale
+      // 50% = 25 rating (below average)
+      // 100% = 50 rating (average)
+      // 150% = 75 rating (above average)
+      // 200%+ = 99 rating (exceptional)
+      let rating = 50 + (percentage - 100) * 0.5;
+      
+      // Cap between 1 and 99
+      return Math.min(99, Math.max(1, rating));
+    };
+
+    // Calculate individual component ratings
+    const groundControlRating = normalizeValue(groundControlPercentage, 50); // 50% as baseline
+    const groundStrikingRating = normalizeValue(groundStrikingAccuracy, weightClassGroundStrikingAccuracy);
+    const groundVolumeRating = normalizeValue(groundStrikesPerRound, weightClassGroundStrikesPerRound);
+    
+    // Combine all three metrics for overall ground game rating
+    // Weight control more heavily as it's fundamental to ground effectiveness
+    const overallGroundGameRating = (groundControlRating * 0.4) + (groundStrikingRating * 0.3) + (groundVolumeRating * 0.3);
+    
+    return overallGroundGameRating;
+  }, [groundControlPercentage, groundStrikingAccuracy, groundStrikesPerRound, weightClassGroundStrikingAccuracy, weightClassGroundStrikesPerRound]);
+
   // Calculate submission attempt rate per round
   const submissionAttemptRatePerRound = React.useMemo(() => {
     const subAttempts = fighter.submission_stats?.SubAttempts || 0;
@@ -184,8 +375,8 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
     return (weightClassSubWin / weightClassSubAttempts) * 100;
   }, [weightClassAvgData]);
 
-  // Prepare overall grappling radar chart data
-  const prepareOverallGrapplingRadarData = () => {
+  // Calculate submission rating based on attempt rate and success rate
+  const submissionRating = React.useMemo(() => {
     // Helper function to normalize values to 1-99 scale
     const normalizeValue = (fighterValue: number, weightClassValue: number) => {
       if (weightClassValue === 0) {
@@ -208,29 +399,44 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
       return Math.min(99, Math.max(1, rating));
     };
 
+    // Calculate individual component ratings
+    const attemptRateRating = normalizeValue(submissionAttemptRatePerRound, weightClassSubmissionAttemptRatePerRound);
+    const successRateRating = normalizeValue(overallSubmissionSuccessRate, weightClassSubmissionSuccessRate);
+    
+    // Combine attempt rate and success rate for overall submission rating
+    // Weight attempt rate more heavily as it shows activity and aggression
+    const overallSubmissionRating = (attemptRateRating * 0.6) + (successRateRating * 0.4);
+    
+    return overallSubmissionRating;
+  }, [submissionAttemptRatePerRound, weightClassSubmissionAttemptRatePerRound, overallSubmissionSuccessRate, weightClassSubmissionSuccessRate]);
+
+  // Calculate overall grappling grade combining all four ratings
+  const overallGrapplingGrade = React.useMemo(() => {
+    // Combine all four grappling ratings with adjusted weighting
+    // Takedowns and ground game are the main components, clinch and submissions weighted less
+    // Each rating is already normalized to 1-99 scale
+    const combinedRating = (takedownRating * 0.35) + (submissionRating * 0.15) + (clinchRating * 0.2) + (groundGameRating * 0.3);
+    
+    return combinedRating;
+  }, [takedownRating, submissionRating, clinchRating, groundGameRating]);
+
+  // Prepare overall grappling radar chart data
+  const prepareOverallGrapplingRadarData = () => {
     // Calculate takedown rating (using existing calculation)
     const takedownRatingValue = takedownRating;
     const weightClassTakedownRating = 50; // Baseline for weight class average
 
-    // Calculate submission rating based on attempt rate and success rate
-    const submissionAttemptRate = submissionAttemptRatePerRound;
-    const weightClassSubmissionAttemptRate = weightClassSubmissionAttemptRatePerRound;
-    const submissionSuccessRate = overallSubmissionSuccessRate;
-    const weightClassSubmissionSuccessRateValue = weightClassSubmissionSuccessRate;
-    
-    // Combine attempt rate and success rate for overall submission rating
-    const submissionRating = normalizeValue(
-      (submissionAttemptRate * 10) + (submissionSuccessRate * 0.5), // Weight attempt rate more heavily
-      (weightClassSubmissionAttemptRate * 10) + (weightClassSubmissionSuccessRateValue * 0.5)
-    );
+    // Use the calculated submission rating
+    const submissionRatingValue = submissionRating;
+    const weightClassSubmissionRating = 50; // Baseline for weight class average
 
-    // Calculate ground game rating based on ground control and striking
-    const groundControlRating = normalizeValue(groundControlPercentage, 50); // 50% as baseline
-    const groundStrikingRating = normalizeValue(groundStrikingAccuracy, weightClassGroundStrikingAccuracy);
-    const groundVolumeRating = normalizeValue(groundStrikesPerRound, weightClassGroundStrikesPerRound);
-    
-    // Combine ground metrics for overall ground rating
-    const groundRating = (groundControlRating + groundStrikingRating + groundVolumeRating) / 3;
+    // Use the calculated ground game rating
+    const groundGameRatingValue = groundGameRating;
+    const weightClassGroundGameRating = 50; // Baseline for weight class average
+
+    // Calculate clinch rating (using the calculated clinchRating)
+    const clinchRatingValue = clinchRating;
+    const weightClassClinchRating = 50; // Baseline for weight class average
 
     return [
       {
@@ -243,19 +449,27 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
       },
       {
         subject: 'Submissions',
-        value: submissionRating,
-        weightClassValue: 50, // Weight class average at 50 (100% of average)
+        value: submissionRatingValue,
+        weightClassValue: weightClassSubmissionRating,
         description: 'Submission effectiveness based on attempt rate and success rate compared to weight class',
-        rawValue: submissionRating,
-        rawWeightClassValue: 50
+        rawValue: submissionRatingValue,
+        rawWeightClassValue: weightClassSubmissionRating
       },
       {
         subject: 'Ground Game',
-        value: groundRating,
-        weightClassValue: 50, // Weight class average at 50 (100% of average)
+        value: groundGameRatingValue,
+        weightClassValue: weightClassGroundGameRating,
         description: 'Ground control, striking accuracy, and volume compared to weight class average',
-        rawValue: groundRating,
-        rawWeightClassValue: 50
+        rawValue: groundGameRatingValue,
+        rawWeightClassValue: weightClassGroundGameRating
+      },
+      {
+        subject: 'Clinch',
+        value: clinchRatingValue,
+        weightClassValue: weightClassClinchRating,
+        description: 'Clinch control, striking accuracy, and volume compared to weight class average',
+        rawValue: clinchRatingValue,
+        rawWeightClassValue: weightClassClinchRating
       }
     ];
   };
@@ -308,6 +522,58 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
         description: 'Average number of ground strikes landed per round compared to weight class average',
         rawValue: groundStrikesPerRound,
         rawWeightClassValue: weightClassGroundStrikesPerRound
+      }
+    ];
+  };
+
+  // Prepare radar chart data for clinch analysis
+  const prepareClinchRadarData = () => {
+    // Helper function to normalize values to 1-99 scale
+    const normalizeValue = (fighterValue: number, weightClassValue: number) => {
+      if (weightClassValue === 0) {
+        // If no weight class data, use simple normalization
+        const maxValue = Math.max(fighterValue, 1);
+        return Math.min(99, Math.max(1, (fighterValue / maxValue) * 99));
+      }
+      
+      // Calculate percentage relative to weight class average
+      const percentage = (fighterValue / weightClassValue) * 100;
+      
+      // Convert to 1-99 scale
+      // 50% = 25 rating (below average)
+      // 100% = 50 rating (average)
+      // 150% = 75 rating (above average)
+      // 200%+ = 99 rating (exceptional)
+      let rating = 50 + (percentage - 100) * 0.5;
+      
+      // Cap between 1 and 99
+      return Math.min(99, Math.max(1, rating));
+    };
+
+    return [
+      {
+        subject: 'Clinch Control',
+        value: clinchControlPercentage,
+        weightClassValue: 50, // Fixed at 50% as baseline
+        description: 'Percentage of time spent controlling the clinch position versus being controlled',
+        rawValue: clinchControlPercentage,
+        rawWeightClassValue: 50
+      },
+      {
+        subject: 'Clinch Accuracy',
+        value: normalizeValue(clinchStrikingAccuracy, weightClassClinchStrikingAccuracy),
+        weightClassValue: 50, // Weight class average at 50 (100% of average)
+        description: 'Accuracy of strikes thrown while in clinch position compared to weight class average',
+        rawValue: clinchStrikingAccuracy,
+        rawWeightClassValue: weightClassClinchStrikingAccuracy
+      },
+      {
+        subject: 'Clinch Volume',
+        value: normalizeValue(clinchStrikesPerRound, weightClassClinchStrikesPerRound),
+        weightClassValue: 50, // Weight class average at 50 (100% of average)
+        description: 'Average number of clinch strikes landed per round compared to weight class average',
+        rawValue: clinchStrikesPerRound,
+        rawWeightClassValue: weightClassClinchStrikesPerRound
       }
     ];
   };
@@ -621,6 +887,137 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                   Comprehensive grappling analysis comparing takedowns, submissions, and ground game effectiveness against weight class averages
                 </Typography>
                 
+                {/* Overall Grappling Grade Display */}
+                <Box sx={{ 
+                  textAlign: 'center', 
+                  mb: 4,
+                  p: 3,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(145deg, rgba(20, 25, 40, 0.98) 0%, rgba(30, 40, 60, 0.95) 100%)',
+                  border: '2px solid rgba(0, 150, 255, 0.3)',
+                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 150, 255, 0.15), 0 0 60px rgba(0, 150, 255, 0.1)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '1px',
+                    background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+                    opacity: 0.5,
+                  }
+                }}>
+                  <Typography sx={{
+                    color: '#FFFFFF',
+                    fontSize: '1.2rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    mb: 2,
+                    textShadow: '0 2px 8px rgba(0, 0, 0, 0.7)',
+                  }}>
+                    Overall Grappling Grade
+                  </Typography>
+                  
+                  {/* Rating Circle */}
+                  <Box sx={{ 
+                    position: 'relative',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 140,
+                    height: 140,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, rgba(10, 14, 23, 0.8) 0%, rgba(20, 30, 50, 0.6) 100%)',
+                    border: '2px solid rgba(0, 240, 255, 0.2)',
+                    boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.3), 0 0 30px rgba(0, 240, 255, 0.1)',
+                    mb: 2,
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '120px',
+                      height: '120px',
+                      borderRadius: '50%',
+                      background: 'conic-gradient(from 0deg, #00F0FF 0deg, #00F0FF ' + (overallGrapplingGrade * 3.6) + 'deg, rgba(0, 240, 255, 0.1) ' + (overallGrapplingGrade * 3.6) + 'deg, rgba(0, 240, 255, 0.1) 360deg)',
+                      zIndex: 1,
+                    },
+                    '&::after': {
+                      content: '""',
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '100px',
+                      height: '100px',
+                      borderRadius: '50%',
+                      background: 'rgba(10, 14, 23, 0.95)',
+                      border: '1px solid rgba(0, 240, 255, 0.15)',
+                      zIndex: 2,
+                    }
+                  }}>
+                    <Box sx={{
+                      position: 'relative',
+                      zIndex: 3,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <Typography
+                        sx={{
+                          fontSize: '2.2rem',
+                          fontWeight: 800,
+                          color: '#00F0FF',
+                          fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                          letterSpacing: '0.1em',
+                          lineHeight: 1,
+                          textShadow: '0 0 15px rgba(0, 240, 255, 0.5)',
+                        }}
+                      >
+                        {overallGrapplingGrade.toFixed(0)}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.15em',
+                          marginTop: '-2px',
+                          fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                        }}
+                      >
+                        Grade
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  <Typography sx={{
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    fontSize: '1rem',
+                    fontWeight: 500,
+                    fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                  }}>
+                    vs 50 avg
+                  </Typography>
+                  
+                  <Typography sx={{
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    fontSize: '0.9rem',
+                    fontStyle: 'italic',
+                    mt: 1,
+                    maxWidth: '500px',
+                    mx: 'auto',
+                  }}>
+                    Combined rating emphasizing takedowns (35%) and ground game (30%) as main components, with clinch (20%) and submissions (15%) weighted less compared to weight class average
+                  </Typography>
+                </Box>
+                
                 {/* Radar Chart */}
                 <Box sx={{ width: '100%', height: 400, position: 'relative' }}>
                   <ResponsiveContainer>
@@ -872,7 +1269,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                       lineHeight: 1.6,
                       mb: 3,
                     }}>
-                      Comprehensive grappling rating based on takedown success rate and volume compared to weight class averages. Shows your most effective takedown techniques.
+                      Comprehensive grappling rating based on takedown success rate and volume compared to weight class averages. Shows your most effective takedown techniques and areas of vulnerability.
                     </Typography>
                     
                     {/* Top 3 Takedown Attempts */}
@@ -966,6 +1363,98 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                         </Typography>
                       </Box>
                     )}
+
+                    {/* Top 3 Takedown Vulnerabilities */}
+                    {topTakedownVulnerabilities.length > 0 ? (
+                      <Box sx={{
+                        p: 2,
+                        borderRadius: '8px',
+                        background: 'linear-gradient(135deg, rgba(255, 107, 107, 0.08) 0%, rgba(255, 64, 64, 0.04) 100%)',
+                        border: '1px solid rgba(255, 107, 107, 0.15)',
+                        backdropFilter: 'blur(5px)',
+                        mb: 3,
+                      }}>
+                        <Typography sx={{ 
+                          color: '#FFFFFF', 
+                          fontWeight: 600, 
+                          mb: 1.5,
+                          fontSize: '0.9rem',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                        }}>
+                          Top 3 Takedown Vulnerabilities
+                        </Typography>
+                        <Grid container spacing={1}>
+                          {topTakedownVulnerabilities.map((vulnerability, index) => (
+                            <Grid item xs={12} key={vulnerability.name}>
+                              <Box sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                p: 1,
+                                borderRadius: '4px',
+                                background: 'rgba(255, 107, 107, 0.05)',
+                                border: '1px solid rgba(255, 107, 107, 0.1)',
+                              }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Box sx={{
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: '50%',
+                                    background: index === 0 ? '#FF4444' : index === 1 ? '#FF6666' : '#FF8888',
+                                    boxShadow: '0 0 8px rgba(255, 68, 68, 0.5)',
+                                  }} />
+                                  <Typography sx={{
+                                    color: '#FFFFFF',
+                                    fontSize: '0.85rem',
+                                    fontWeight: 600,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em',
+                                  }}>
+                                    {vulnerability.name}
+                                  </Typography>
+                                </Box>
+                                <Box sx={{ textAlign: 'right' }}>
+                                  <Typography sx={{
+                                    color: '#FF6B6B',
+                                    fontSize: '0.9rem',
+                                    fontWeight: 700,
+                                    fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                                  }}>
+                                    {vulnerability.timesPerRound.toFixed(2)}/round
+                                  </Typography>
+                                  <Typography sx={{
+                                    color: 'rgba(255, 255, 255, 0.7)',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 500,
+                                  }}>
+                                    {vulnerability.timesPerMinute.toFixed(3)}/min • {vulnerability.timesTakenDown} total
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </Grid>
+                          ))}
+                        </Grid>
+                      </Box>
+                    ) : (
+                      <Box sx={{
+                        p: 2,
+                        borderRadius: '8px',
+                        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        backdropFilter: 'blur(5px)',
+                        mb: 3,
+                      }}>
+                        <Typography sx={{
+                          color: 'rgba(255, 255, 255, 0.6)',
+                          fontSize: '0.9rem',
+                          fontStyle: 'italic',
+                          textAlign: 'center',
+                        }}>
+                          No takedown vulnerability data available
+                        </Typography>
+                      </Box>
+                    )}
                   </Grid>
                 </Grid>
               </Box>
@@ -1038,6 +1527,138 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
             {/* Collapsible Content */}
             <Collapse in={!collapsedSections.submissions}>
               <Box sx={{ p: 4 }}>
+                
+                {/* Submission Rating Display */}
+                <Box sx={{ 
+                  textAlign: 'center', 
+                  mb: 4,
+                  p: 3,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(145deg, rgba(20, 25, 40, 0.98) 0%, rgba(30, 40, 60, 0.95) 100%)',
+                  border: '2px solid rgba(0, 150, 255, 0.3)',
+                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 150, 255, 0.15), 0 0 60px rgba(0, 150, 255, 0.1)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '1px',
+                    background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+                    opacity: 0.5,
+                  }
+                }}>
+                  <Typography sx={{
+                    color: '#FFFFFF',
+                    fontSize: '1.1rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    mb: 2,
+                    textShadow: '0 2px 8px rgba(0, 0, 0, 0.7)',
+                  }}>
+                    Submission Rating
+                  </Typography>
+                  
+                  {/* Rating Circle */}
+                  <Box sx={{ 
+                    position: 'relative',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 120,
+                    height: 120,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, rgba(10, 14, 23, 0.8) 0%, rgba(20, 30, 50, 0.6) 100%)',
+                    border: '2px solid rgba(0, 240, 255, 0.2)',
+                    boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.3), 0 0 30px rgba(0, 240, 255, 0.1)',
+                    mb: 2,
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '100px',
+                      height: '100px',
+                      borderRadius: '50%',
+                      background: 'conic-gradient(from 0deg, #00F0FF 0deg, #00F0FF ' + (submissionRating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) ' + (submissionRating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) 360deg)',
+                      zIndex: 1,
+                    },
+                    '&::after': {
+                      content: '""',
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '80px',
+                      height: '80px',
+                      borderRadius: '50%',
+                      background: 'rgba(10, 14, 23, 0.95)',
+                      border: '1px solid rgba(0, 240, 255, 0.15)',
+                      zIndex: 2,
+                    }
+                  }}>
+                    <Box sx={{
+                      position: 'relative',
+                      zIndex: 3,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <Typography
+                        sx={{
+                          fontSize: '1.8rem',
+                          fontWeight: 800,
+                          color: '#00F0FF',
+                          fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                          letterSpacing: '0.1em',
+                          lineHeight: 1,
+                          textShadow: '0 0 15px rgba(0, 240, 255, 0.5)',
+                        }}
+                      >
+                        {submissionRating.toFixed(0)}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          fontSize: '0.65rem',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.15em',
+                          marginTop: '-2px',
+                          fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                        }}
+                      >
+                        Rating
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  <Typography sx={{
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    fontSize: '0.9rem',
+                    fontWeight: 500,
+                    fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                  }}>
+                    vs 50 avg
+                  </Typography>
+                  
+                  <Typography sx={{
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    fontSize: '0.85rem',
+                    fontStyle: 'italic',
+                    mt: 1,
+                    maxWidth: '400px',
+                    mx: 'auto',
+                  }}>
+                    Based on submission attempt rate and success rate compared to weight class average
+                  </Typography>
+                </Box>
+                
                 <Grid container spacing={4}>
                   <Grid item xs={12} sm={6}>
                     <Box 
@@ -1288,6 +1909,672 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
           </Box>
         </Grid>
 
+        {/* Clinch Analysis */}
+        <Grid item xs={12}>
+          <Box sx={ratingCardStyles.collapsibleSection}>
+            {/* Collapsible Header */}
+            <Box 
+              sx={ratingCardStyles.sectionHeader}
+              onClick={() => toggleSection('clinch')}
+            >
+              <Box sx={ratingCardStyles.sectionTitle}>
+                <Box 
+                  className="rating-icon"
+                  sx={{
+                    ...ratingCardStyles.icon,
+                    width: 45,
+                    height: 45,
+                  }}
+                >
+                  <Box sx={{
+                    width: '28px',
+                    height: '28px',
+                    position: 'relative',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '16px',
+                      height: '16px',
+                      borderRadius: '50%',
+                      background: '#00F0FF',
+                      boxShadow: '0 0 12px rgba(0, 240, 255, 0.5)',
+                    },
+                    '&::after': {
+                      content: '""',
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      border: '2px solid #00F0FF',
+                      opacity: 0.3,
+                    }
+                  }}/>
+                </Box>
+                <Typography sx={{
+                  ...ratingCardStyles.title,
+                  fontSize: '1.3rem',
+                }}>
+                  Clinch Analysis
+                </Typography>
+              </Box>
+              <IconButton
+                sx={ratingCardStyles.expandIcon}
+                className={collapsedSections.clinch ? '' : 'expanded'}
+              >
+                {collapsedSections.clinch ? <ExpandMore /> : <ExpandLess />}
+              </IconButton>
+            </Box>
+
+            {/* Collapsible Content */}
+            <Collapse in={!collapsedSections.clinch}>
+              <Box sx={{ p: 4 }}>
+                
+                {/* Clinch Rating Display */}
+                <Box sx={{ 
+                  textAlign: 'center', 
+                  mb: 4,
+                  p: 3,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(145deg, rgba(20, 25, 40, 0.98) 0%, rgba(30, 40, 60, 0.95) 100%)',
+                  border: '2px solid rgba(0, 150, 255, 0.3)',
+                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 150, 255, 0.15), 0 0 60px rgba(0, 150, 255, 0.1)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '1px',
+                    background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+                    opacity: 0.5,
+                  }
+                }}>
+                  <Typography sx={{
+                    color: '#FFFFFF',
+                    fontSize: '1.1rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    mb: 2,
+                    textShadow: '0 2px 8px rgba(0, 0, 0, 0.7)',
+                  }}>
+                    Clinch Rating
+                  </Typography>
+                  
+                  {/* Rating Circle */}
+                  <Box sx={{ 
+                    position: 'relative',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 120,
+                    height: 120,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, rgba(10, 14, 23, 0.8) 0%, rgba(20, 30, 50, 0.6) 100%)',
+                    border: '2px solid rgba(0, 240, 255, 0.2)',
+                    boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.3), 0 0 30px rgba(0, 240, 255, 0.1)',
+                    mb: 2,
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '100px',
+                      height: '100px',
+                      borderRadius: '50%',
+                      background: 'conic-gradient(from 0deg, #00F0FF 0deg, #00F0FF ' + (clinchRating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) ' + (clinchRating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) 360deg)',
+                      zIndex: 1,
+                    },
+                    '&::after': {
+                      content: '""',
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '80px',
+                      height: '80px',
+                      borderRadius: '50%',
+                      background: 'rgba(10, 14, 23, 0.95)',
+                      border: '1px solid rgba(0, 240, 255, 0.15)',
+                      zIndex: 2,
+                    }
+                  }}>
+                    <Box sx={{
+                      position: 'relative',
+                      zIndex: 3,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <Typography
+                        sx={{
+                          fontSize: '1.8rem',
+                          fontWeight: 800,
+                          color: '#00F0FF',
+                          fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                          letterSpacing: '0.1em',
+                          lineHeight: 1,
+                          textShadow: '0 0 15px rgba(0, 240, 255, 0.5)',
+                        }}
+                      >
+                        {clinchRating.toFixed(0)}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          fontSize: '0.65rem',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.15em',
+                          marginTop: '-2px',
+                          fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                        }}
+                      >
+                        Rating
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  <Typography sx={{
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    fontSize: '0.9rem',
+                    fontWeight: 500,
+                    fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                  }}>
+                    vs 50 avg
+                  </Typography>
+                  
+                  <Typography sx={{
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    fontSize: '0.85rem',
+                    fontStyle: 'italic',
+                    mt: 1,
+                    maxWidth: '400px',
+                    mx: 'auto',
+                  }}>
+                    Based on clinch control, striking accuracy, and volume compared to weight class average
+                  </Typography>
+                </Box>
+                
+                <Grid container spacing={4} justifyContent="center">
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Box 
+                      sx={{ 
+                        p: 3,
+                        borderRadius: '12px',
+                        bgcolor: 'rgba(10, 14, 23, 0.4)',
+                        border: '1px solid rgba(0, 240, 255, 0.15)',
+                        height: '100%',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          bgcolor: 'rgba(10, 14, 23, 0.6)',
+                          transform: 'translateY(-2px)',
+                          border: '1px solid rgba(0, 240, 255, 0.3)',
+                          '& .clinch-icon': {
+                            transform: 'scale(1.1)',
+                          }
+                        },
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: '1px',
+                          background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+                          opacity: 0.5,
+                        }
+                      }}
+                    >
+                      {/* Header */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1.5 }}>
+                        <Box 
+                          className="clinch-icon"
+                          sx={{ 
+                            width: 40,
+                            height: 40,
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'linear-gradient(135deg, rgba(10, 14, 23, 0.9), rgba(10, 14, 23, 0.7))',
+                            border: '1px solid rgba(0, 240, 255, 0.2)',
+                            transition: 'transform 0.3s ease',
+                          }}
+                        >
+                          <Box sx={{
+                            width: '24px',
+                            height: '24px',
+                            position: 'relative',
+                            '&::before': {
+                              content: '""',
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              width: '16px',
+                              height: '16px',
+                              border: '2px solid #00F0FF',
+                              borderRadius: '50%',
+                              boxShadow: '0 0 12px rgba(0, 240, 255, 0.5)',
+                            },
+                            '&::after': {
+                              content: '""',
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              border: '2px solid #00F0FF',
+                              opacity: 0.5,
+                            }
+                          }}/>
+                        </Box>
+                        <Typography sx={{
+                          color: '#fff',
+                          fontWeight: 600,
+                          fontSize: '1rem',
+                          textTransform: 'uppercase' as const,
+                          letterSpacing: '0.05em',
+                        }}>
+                          Clinch Control
+                        </Typography>
+                      </Box>
+                      
+                      {/* Description */}
+                      <Typography sx={{
+                        color: 'rgba(255, 255, 255, 0.5)',
+                        fontSize: '0.85rem',
+                        mb: 2,
+                        fontStyle: 'italic',
+                      }}>
+                        Percentage of time spent controlling the clinch position versus being controlled
+                      </Typography>
+                      
+                      {/* Value */}
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Typography sx={{
+                          color: '#00F0FF',
+                          fontSize: '2rem',
+                          fontWeight: 700,
+                          fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                          letterSpacing: '0.1em',
+                          textShadow: '0 0 15px rgba(0, 240, 255, 0.5)',
+                        }}>
+                          {clinchControlPercentage.toFixed(0)}%
+                        </Typography>
+                        <Typography sx={{
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          fontSize: '0.9rem',
+                          fontWeight: 500,
+                          fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                        }}>
+                          control rate
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Box 
+                      sx={{ 
+                        p: 3,
+                        borderRadius: '12px',
+                        bgcolor: 'rgba(10, 14, 23, 0.4)',
+                        border: '1px solid rgba(0, 240, 255, 0.15)',
+                        height: '100%',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          bgcolor: 'rgba(10, 14, 23, 0.6)',
+                          transform: 'translateY(-2px)',
+                          border: '1px solid rgba(0, 240, 255, 0.3)',
+                          '& .clinch-icon': {
+                            transform: 'scale(1.1)',
+                          }
+                        },
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: '1px',
+                          background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+                          opacity: 0.5,
+                        }
+                      }}
+                    >
+                      {/* Header */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1.5 }}>
+                        <Box 
+                          className="clinch-icon"
+                          sx={{ 
+                            width: 40,
+                            height: 40,
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'linear-gradient(135deg, rgba(10, 14, 23, 0.9), rgba(10, 14, 23, 0.7))',
+                            border: '1px solid rgba(0, 240, 255, 0.2)',
+                            transition: 'transform 0.3s ease',
+                          }}
+                        >
+                          <Box sx={{
+                            width: '24px',
+                            height: '24px',
+                            position: 'relative',
+                            '&::before': {
+                              content: '""',
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              width: '12px',
+                              height: '12px',
+                              borderRadius: '50%',
+                              background: '#00F0FF',
+                              boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                            },
+                            '&::after': {
+                              content: '""',
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              border: '2px solid #00F0FF',
+                              opacity: 0.5,
+                            }
+                          }}/>
+                        </Box>
+                        <Typography sx={{
+                          color: '#fff',
+                          fontWeight: 600,
+                          fontSize: '1rem',
+                          textTransform: 'uppercase' as const,
+                          letterSpacing: '0.05em',
+                        }}>
+                          Clinch Striking Accuracy
+                        </Typography>
+                      </Box>
+                      
+                      {/* Description */}
+                      <Typography sx={{
+                        color: 'rgba(255, 255, 255, 0.5)',
+                        fontSize: '0.85rem',
+                        mb: 2,
+                        fontStyle: 'italic',
+                      }}>
+                        Accuracy of strikes thrown while in clinch position compared to weight class average
+                      </Typography>
+                      
+                      {/* Value */}
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Typography sx={{
+                          color: '#00F0FF',
+                          fontSize: '2rem',
+                          fontWeight: 700,
+                          fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                          letterSpacing: '0.1em',
+                          textShadow: '0 0 15px rgba(0, 240, 255, 0.5)',
+                        }}>
+                          {clinchStrikingAccuracy.toFixed(0)}%
+                        </Typography>
+                        {weightClassAvgData && (
+                          <Typography sx={{
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            fontSize: '0.9rem',
+                            fontWeight: 500,
+                            fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                          }}>
+                            vs {weightClassClinchStrikingAccuracy.toFixed(0)}% avg
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Box 
+                      sx={{ 
+                        p: 3,
+                        borderRadius: '12px',
+                        bgcolor: 'rgba(10, 14, 23, 0.4)',
+                        border: '1px solid rgba(0, 240, 255, 0.15)',
+                        height: '100%',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          bgcolor: 'rgba(10, 14, 23, 0.6)',
+                          transform: 'translateY(-2px)',
+                          border: '1px solid rgba(0, 240, 255, 0.3)',
+                          '& .clinch-icon': {
+                            transform: 'scale(1.1)',
+                          }
+                        },
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: '1px',
+                          background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+                          opacity: 0.5,
+                        }
+                      }}
+                    >
+                      {/* Header */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1.5 }}>
+                        <Box 
+                          className="clinch-icon"
+                          sx={{ 
+                            width: 40,
+                            height: 40,
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'linear-gradient(135deg, rgba(10, 14, 23, 0.9), rgba(10, 14, 23, 0.7))',
+                            border: '1px solid rgba(0, 240, 255, 0.2)',
+                            transition: 'transform 0.3s ease',
+                          }}
+                        >
+                          <Box sx={{
+                            width: '24px',
+                            height: '24px',
+                            position: 'relative',
+                            '&::before': {
+                              content: '""',
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              width: '16px',
+                              height: '16px',
+                              border: '2px solid #00F0FF',
+                              clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+                            }
+                          }}/>
+                        </Box>
+                        <Typography sx={{
+                          color: '#fff',
+                          fontWeight: 600,
+                          fontSize: '1rem',
+                          textTransform: 'uppercase' as const,
+                          letterSpacing: '0.05em',
+                        }}>
+                          Clinch Strikes/Round
+                        </Typography>
+                      </Box>
+                      
+                      {/* Description */}
+                      <Typography sx={{
+                        color: 'rgba(255, 255, 255, 0.5)',
+                        fontSize: '0.85rem',
+                        mb: 2,
+                        fontStyle: 'italic',
+                      }}>
+                        Average number of clinch strikes landed per round compared to weight class
+                      </Typography>
+                      
+                      {/* Value */}
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Typography sx={{
+                          color: '#00F0FF',
+                          fontSize: '2rem',
+                          fontWeight: 700,
+                          fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                          letterSpacing: '0.1em',
+                          textShadow: '0 0 15px rgba(0, 240, 255, 0.5)',
+                        }}>
+                          {clinchStrikesPerRound.toFixed(1)}
+                        </Typography>
+                        {weightClassAvgData && (
+                          <Typography sx={{
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            fontSize: '0.9rem',
+                            fontWeight: 500,
+                            fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                          }}>
+                            vs {weightClassClinchStrikesPerRound.toFixed(1)} avg
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  </Grid>
+                </Grid>
+
+                {/* Radar Chart */}
+                <Box sx={{ mt: 6 }}>
+                  <Typography 
+                    sx={{ 
+                      color: '#FFFFFF',
+                      fontWeight: 600,
+                      fontSize: '1.1rem',
+                      mb: 3,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      textAlign: 'center',
+                      position: 'relative',
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        bottom: -8,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: '60px',
+                        height: '2px',
+                        background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+                      }
+                    }}
+                  >
+                    Clinch Radar Analysis
+                  </Typography>
+                  
+                  <Box sx={{ width: '100%', height: 400, position: 'relative' }}>
+                    <ResponsiveContainer>
+                      <RadarChart data={prepareClinchRadarData()} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+                        <PolarGrid 
+                          stroke="rgba(0, 240, 255, 0.1)"
+                          gridType="circle"
+                        />
+                        <PolarAngleAxis 
+                          dataKey="subject" 
+                          tick={{ 
+                            fill: '#fff',
+                            fontSize: 12,
+                            fontWeight: 500,
+                          }}
+                          stroke="rgba(0, 240, 255, 0.2)"
+                        />
+                        <PolarRadiusAxis 
+                          angle={90} 
+                          domain={[0, 100]}
+                          tick={{ 
+                            fill: 'rgba(255, 255, 255, 0.5)',
+                            fontSize: 10 
+                          }}
+                          stroke="rgba(0, 240, 255, 0.1)"
+                        />
+                        {/* Weight Class Average Radar */}
+                        <Radar
+                          name="Weight Class Average"
+                          dataKey="weightClassValue"
+                          stroke="#FF3864"
+                          fill="#FF3864"
+                          fillOpacity={0.15}
+                        />
+                        {/* Fighter Stats Radar */}
+                        <Radar
+                          name="Fighter Stats"
+                          dataKey="value"
+                          stroke="#00F0FF"
+                          fill="#00F0FF"
+                          fillOpacity={0.3}
+                        />
+                        <RechartsTooltip content={<CustomTooltip />} />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                    
+                    {/* Legend */}
+                    <Box 
+                      sx={{ 
+                        position: 'absolute',
+                        bottom: 10,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        display: 'flex',
+                        gap: 3,
+                        bgcolor: 'rgba(10, 14, 23, 0.9)',
+                        p: 1,
+                        borderRadius: '6px',
+                        border: '1px solid rgba(0, 240, 255, 0.2)',
+                        backdropFilter: 'blur(5px)',
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ 
+                          width: 12, 
+                          height: 12, 
+                          bgcolor: '#00F0FF',
+                          borderRadius: '50%',
+                          boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                        }} />
+                        <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ width: 12, height: 12, bgcolor: '#FF3864', borderRadius: '50%', opacity: 0.8 }} />
+                        <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>Weight Class Avg</Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            </Collapse>
+          </Box>
+        </Grid>
+
         {/* Ground Game Metrics */}
         <Grid item xs={12}>
           <Box sx={ratingCardStyles.collapsibleSection}>
@@ -1353,6 +2640,138 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
             {/* Collapsible Content */}
             <Collapse in={!collapsedSections.groundGame}>
               <Box sx={{ p: 4 }}>
+                
+                {/* Ground Game Rating Display */}
+                <Box sx={{ 
+                  textAlign: 'center', 
+                  mb: 4,
+                  p: 3,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(145deg, rgba(20, 25, 40, 0.98) 0%, rgba(30, 40, 60, 0.95) 100%)',
+                  border: '2px solid rgba(0, 150, 255, 0.3)',
+                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 150, 255, 0.15), 0 0 60px rgba(0, 150, 255, 0.1)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '1px',
+                    background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+                    opacity: 0.5,
+                  }
+                }}>
+                  <Typography sx={{
+                    color: '#FFFFFF',
+                    fontSize: '1.1rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    mb: 2,
+                    textShadow: '0 2px 8px rgba(0, 0, 0, 0.7)',
+                  }}>
+                    Ground Game Rating
+                  </Typography>
+                  
+                  {/* Rating Circle */}
+                  <Box sx={{ 
+                    position: 'relative',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 120,
+                    height: 120,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, rgba(10, 14, 23, 0.8) 0%, rgba(20, 30, 50, 0.6) 100%)',
+                    border: '2px solid rgba(0, 240, 255, 0.2)',
+                    boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.3), 0 0 30px rgba(0, 240, 255, 0.1)',
+                    mb: 2,
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '100px',
+                      height: '100px',
+                      borderRadius: '50%',
+                      background: 'conic-gradient(from 0deg, #00F0FF 0deg, #00F0FF ' + (groundGameRating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) ' + (groundGameRating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) 360deg)',
+                      zIndex: 1,
+                    },
+                    '&::after': {
+                      content: '""',
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '80px',
+                      height: '80px',
+                      borderRadius: '50%',
+                      background: 'rgba(10, 14, 23, 0.95)',
+                      border: '1px solid rgba(0, 240, 255, 0.15)',
+                      zIndex: 2,
+                    }
+                  }}>
+                    <Box sx={{
+                      position: 'relative',
+                      zIndex: 3,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <Typography
+                        sx={{
+                          fontSize: '1.8rem',
+                          fontWeight: 800,
+                          color: '#00F0FF',
+                          fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                          letterSpacing: '0.1em',
+                          lineHeight: 1,
+                          textShadow: '0 0 15px rgba(0, 240, 255, 0.5)',
+                        }}
+                      >
+                        {groundGameRating.toFixed(0)}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          fontSize: '0.65rem',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.15em',
+                          marginTop: '-2px',
+                          fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                        }}
+                      >
+                        Rating
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  <Typography sx={{
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    fontSize: '0.9rem',
+                    fontWeight: 500,
+                    fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                  }}>
+                    vs 50 avg
+                  </Typography>
+                  
+                  <Typography sx={{
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    fontSize: '0.85rem',
+                    fontStyle: 'italic',
+                    mt: 1,
+                    maxWidth: '400px',
+                    mx: 'auto',
+                  }}>
+                    Based on ground control, striking accuracy, and volume compared to weight class average
+                  </Typography>
+                </Box>
+                
                 <Grid container spacing={4}>
                   <Grid item xs={12} sm={4}>
                     <Box 

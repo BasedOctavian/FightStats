@@ -19,7 +19,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
     calculateStrikesPerMinute,
     calculateWeightClassStrikesPerMinute,
     calculateStrikingRating,
-    calculateTakedownRating,
+    calculateGrapplingGrade,
     calculateDefenseRating,
     calculateFinishRating,
     calculatePositionalRating,
@@ -1538,10 +1538,10 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
               </Grid>
             )}
 
-            {/* Takedowns Rating */}
+            {/* Grappling Grade */}
             <Grid item xs={12} sm={6} md={4}>
               <Tooltip 
-                title="Takedown effectiveness based on success rate and frequency compared to weight class"
+                title="Comprehensive grappling rating including takedowns, submissions, clinch, and ground game compared to weight class"
                 placement="top"
                 arrow
               >
@@ -1563,25 +1563,15 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
                           left: '50%',
                           transform: 'translate(-50%, -50%)',
                           width: '16px',
-                          height: '2px',
-                          background: '#00F0FF',
-                          boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
-                        },
-                        '&::after': {
-                          content: '""',
-                          position: 'absolute',
-                          top: '50%',
-                          left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          width: '2px',
                           height: '16px',
-                          background: '#00F0FF',
-                          boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                          border: '2px solid #00F0FF',
+                          borderRadius: '4px',
+                          boxShadow: '0 0 10px rgba(0, 240, 255, 0.3)',
                         }
                       }}/>
                     </Box>
                     <Typography sx={ratingCardStyles.title}>
-                      Takedowns
+                      Grappling
                     </Typography>
                   </Box>
 
@@ -1589,7 +1579,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
                   <Box sx={ratingCardStyles.metrics}>
                     <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1 }}>
                       <Typography sx={ratingCardStyles.ratingValue}>
-                        {calculateTakedownRating()}
+                        {calculateGrapplingGrade()}
                       </Typography>
                       <Typography sx={ratingCardStyles.ratingUnit}>
                         / 100 rating
@@ -1609,7 +1599,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
                     )}
                     
                     <Typography sx={ratingCardStyles.description}>
-                      Takedown effectiveness based on success rate and frequency compared to weight class
+                      Comprehensive grappling rating including takedowns, submissions, clinch, and ground game compared to weight class
                     </Typography>
                   </Box>
 
@@ -1618,7 +1608,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
                     <Typography sx={ratingCardStyles.progressLabel}>
                       <span>Fighter Rating</span>
                       <span style={{ color: '#00F0FF' }}>
-                        {calculateTakedownRating()}%
+                        {calculateGrapplingGrade()}%
                       </span>
                     </Typography>
                     <Box 
@@ -1628,7 +1618,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
                       <Box 
                         sx={{
                           ...ratingCardStyles.progressFill,
-                          width: `${calculateTakedownRating()}%`,
+                          width: `${calculateGrapplingGrade()}%`,
                         }}
                       />
                     </Box>

@@ -19,12 +19,14 @@ import {
   History as HistoryIcon,
   SportsMartialArts as StrikingIcon,
   Sports as GrapplingIcon,
+  DirectionsRun as MovementIcon,
 } from '@mui/icons-material';
 import { useFighter } from '../../hooks/useFighters';
 import BasicInfo from '../../components/fighter/BasicInfo';
 import FightHistory from '../../components/fighter/FightHistory';
 import StrikingInfo from '../../components/fighter/StrikingInfo';
 import GrapplingInfo from '../../components/fighter/GrapplingInfo';
+import MovementInfo from '../../components/fighter/MovementInfo';
 import { useWeightClass } from '../../hooks/useWeightClass';
 
 // Helper function to format record
@@ -94,7 +96,7 @@ const FighterDetailPage: React.FC = () => {
     }
   }, [weightClassData, weightClassError]);
 
-  // Define tabs - Overview, Striking, Grappling, and Fight History
+  // Define tabs - Overview, Striking, Grappling, Movement, and Fight History
   const tabs = useMemo(() => {
     if (!fighter) return [];
     
@@ -115,9 +117,14 @@ const FighterDetailPage: React.FC = () => {
         component: <GrapplingInfo fighter={fighter} weightClassAvgData={weightClassData} />
       },
       {
+        icon: <MovementIcon />,
+        label: "Movement",
+        component: <MovementInfo fighter={fighter} weightClassAvgData={weightClassData} />
+      },
+      {
         icon: <HistoryIcon />,
         label: "Fight History",
-        component: <FightHistory fighter={fighter} />
+        component: <FightHistory fighter={fighter} weightClassAvgData={weightClassData} />
       }
     ];
   }, [fighter, weightClassData]);

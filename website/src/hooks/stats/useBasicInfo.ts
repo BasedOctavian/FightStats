@@ -1243,12 +1243,17 @@ export const useBasicInfo = (fighter: Fighter, weightClassAvgData?: any) => {
     return Math.min(100, Math.max(1, Math.round(rating)));
   }, [calculateStrikingAccuracy, calculateStrikesPerMinute, calculateWeightClassStrikesPerMinute, UFC_AVERAGES.strikingAccuracy]);
 
-  // Calculate comprehensive takedown rating (1-100)
-  const calculateTakedownRating = React.useCallback((): number => {
+  // Calculate comprehensive grappling grade (1-100) - replacing takedown rating
+  const calculateGrapplingGrade = React.useCallback((): number => {
+    // Calculate individual ratings similar to GrapplingInfo component
     const takedownStats = fighter.takedown_stats;
+    const submissionStats = fighter.submission_stats;
+    const clinchStats = fighter.clinch_stats;
+    const groundStats = fighter.ground_stats;
+    
     if (!takedownStats || !weightClassAvgData) return 50; // Default to average if no data
 
-    // Calculate fighter's total takedown attempts and successes
+    // Takedown Rating (35% weight)
     const fighterAttempts = (
       (takedownStats.BodyLockTakedownAttempts || 0) +
       (takedownStats.DoubleLegTakedownAttempts || 0) +
@@ -1269,7 +1274,6 @@ export const useBasicInfo = (fighter: Fighter, weightClassAvgData?: any) => {
       (takedownStats.SuccessfulImanariTD || 0)
     );
 
-    // Calculate weight class takedown attempts 
     const weightClassAttempts = (
       (weightClassAvgData.BodyLockTakedownAttempts || 0) +
       (weightClassAvgData.DoubleLegTakedownAttempts || 0) +
@@ -1278,44 +1282,116 @@ export const useBasicInfo = (fighter: Fighter, weightClassAvgData?: any) => {
       (weightClassAvgData.AttemptedThrowTD || 0)
     );
 
-    // Use UFC average success rate as baseline (38%)
     const ufcAverageSuccessRate = 0.38;
-
-    // Prevent division by zero
-    if (fighterAttempts === 0 && weightClassAttempts === 0) return 50;
-    
-    // Calculate fighter success rate
     const fighterSuccessRate = fighterAttempts > 0 ? fighterSuccesses / fighterAttempts : 0;
-
-    // Calculate attempts per fight to factor in takedown frequency
     const fighterFights = fighter.FightsTracked || 1;
     const weightClassFights = weightClassAvgData.fights || 1;
-    
     const fighterAttemptsPerFight = fighterAttempts / fighterFights;
     const weightClassAttemptsPerFight = weightClassAttempts / weightClassFights;
 
-    // Prevent division by zero for frequency ratio
+    let takedownRating = 50;
     if (weightClassAttemptsPerFight === 0) {
-      // If no weight class data, base rating purely on fighter's success rate vs UFC average
       const simpleRatio = fighterSuccessRate / ufcAverageSuccessRate;
-      const rating = 50 + (50 * Math.tanh((simpleRatio - 1) * 2));
-      return Math.min(100, Math.max(1, Math.round(rating)));
+      takedownRating = 50 + (50 * Math.tanh((simpleRatio - 1) * 2));
+    } else {
+      const successRateRatio = fighterSuccessRate / ufcAverageSuccessRate;
+      const frequencyRatio = fighterAttemptsPerFight / weightClassAttemptsPerFight;
+      const combinedRatio = (successRateRatio * 0.7) + (frequencyRatio * 0.3);
+      takedownRating = 50 + (50 * Math.tanh((combinedRatio - 1) * 2));
+    }
+    takedownRating = Math.min(100, Math.max(1, Math.round(takedownRating)));
+
+    // Submission Rating (15% weight)
+    let submissionRating = 50;
+    if (submissionStats && weightClassAvgData) {
+      const fighterSubAttempts = submissionStats.SubAttempts || 0;
+      const fighterSubWins = (submissionStats.SUBRNCWin || 0) + (submissionStats.SubGuillotineWin || 0) + 
+                            (submissionStats.SubTriangleWin || 0) + (submissionStats.SubArmTriangleWin || 0) +
+                            (submissionStats.SubKimuraWin || 0) + (submissionStats.SubDarceWin || 0) +
+                            (submissionStats.SubHeelHookWin || 0) + (submissionStats.SubStraightArmLockWin || 0) +
+                            (submissionStats.SubTriangleArmbarWin || 0) + (submissionStats.SubNeckCrankWin || 0) +
+                            (submissionStats.SubSulovStretchWin || 0) + (submissionStats.VonFlueWin || 0) +
+                            (submissionStats.AmericanaWins || 0) + (submissionStats.AnacondaWin || 0) +
+                            (submissionStats.BulldogWin || 0) + (submissionStats.CalfSlicerWins || 0) +
+                            (submissionStats.EzekielWin || 0) + (submissionStats.GogoplataWins || 0) +
+                            (submissionStats.KneebarWin || 0) + (submissionStats.LeglockWin || 0) +
+                            (submissionStats.OmoplataWin || 0) + (submissionStats.OtherSubWin || 0) +
+                            (submissionStats.TwisterWins || 0);
+
+      const fighterSubSuccessRate = fighterSubAttempts > 0 ? fighterSubWins / fighterSubAttempts : 0;
+      const fighterSubAttemptsPerRound = fighterSubAttempts / (fighter.RoundsTracked || 1);
+      
+      const weightClassSubAttemptsPerRound = weightClassAvgData.submissionAttemptsPerRound || 0.5;
+      const weightClassSubSuccessRate = weightClassAvgData.submissionSuccessRate || 0.15;
+
+      const attemptRateRating = 50 + (50 * Math.tanh(((fighterSubAttemptsPerRound / weightClassSubAttemptsPerRound) - 1) * 2));
+      const successRateRating = 50 + (50 * Math.tanh(((fighterSubSuccessRate / weightClassSubSuccessRate) - 1) * 2));
+      
+      submissionRating = (attemptRateRating * 0.6) + (successRateRating * 0.4);
+      submissionRating = Math.min(100, Math.max(1, Math.round(submissionRating)));
     }
 
-    // Calculate ratios compared to baselines
-    const successRateRatio = fighterSuccessRate / ufcAverageSuccessRate;
-    const frequencyRatio = fighterAttemptsPerFight / weightClassAttemptsPerFight;
+    // Clinch Rating (20% weight)
+    let clinchRating = 50;
+    if (clinchStats && weightClassAvgData) {
+      const clinchControlPercentage = clinchStats.InClinch && clinchStats.BeingClinched ? 
+        (clinchStats.InClinch / (clinchStats.InClinch + clinchStats.BeingClinched)) * 100 : 50;
+      
+      const clinchStrikingAccuracy = clinchStats.TotalClinchStrikesThrown > 0 ? 
+        (clinchStats.TotalClinchStrikesMade / clinchStats.TotalClinchStrikesThrown) * 100 : 0;
+      
+      const clinchStrikesPerRound = clinchStats.TotalClinchStrikesThrown / (fighter.RoundsTracked || 1);
+      
+      const weightClassClinchStrikingAccuracy = weightClassAvgData.clinchStrikingAccuracy || 45;
+      const weightClassClinchStrikesPerRound = weightClassAvgData.clinchStrikesPerRound || 2.5;
 
-    // Combine success rate (70%) and frequency (30%) with weights
-    const combinedRatio = (successRateRatio * 0.7) + (frequencyRatio * 0.3);
+      const normalizeValue = (fighterValue: number, weightClassValue: number) => {
+        if (weightClassValue === 0) return 50;
+        const ratio = fighterValue / weightClassValue;
+        return 50 + (50 * Math.tanh((ratio - 1) * 2));
+      };
 
-    // Convert to 1-100 scale with 50 as average
-    // Using tanh to create a smooth curve
-    const rating = 50 + (50 * Math.tanh((combinedRatio - 1) * 2));
+      const clinchControlRating = normalizeValue(clinchControlPercentage, 50);
+      const clinchAccuracyRating = normalizeValue(clinchStrikingAccuracy, weightClassClinchStrikingAccuracy);
+      const clinchVolumeRating = normalizeValue(clinchStrikesPerRound, weightClassClinchStrikesPerRound);
+      
+      clinchRating = (clinchControlRating * 0.4) + (clinchAccuracyRating * 0.3) + (clinchVolumeRating * 0.3);
+      clinchRating = Math.min(100, Math.max(1, Math.round(clinchRating)));
+    }
 
-    // Ensure rating stays within 1-100 bounds
-    return Math.min(100, Math.max(1, Math.round(rating)));
-  }, [fighter, weightClassAvgData, UFC_AVERAGES.takedownSuccess]);
+    // Ground Game Rating (30% weight)
+    let groundGameRating = 50;
+    if (groundStats && weightClassAvgData) {
+      const groundControlPercentage = groundStats.OnTopGround && groundStats.OnBottomGround ? 
+        (groundStats.OnTopGround / (groundStats.OnTopGround + groundStats.OnBottomGround)) * 100 : 50;
+      
+      const groundStrikingAccuracy = groundStats.TotalGroundStrikesThrown > 0 ? 
+        (groundStats.TotalGroundStrikesMade / groundStats.TotalGroundStrikesThrown) * 100 : 0;
+      
+      const groundStrikesPerRound = groundStats.TotalGroundStrikesThrown / (fighter.RoundsTracked || 1);
+      
+      const weightClassGroundStrikingAccuracy = weightClassAvgData.groundStrikingAccuracy || 40;
+      const weightClassGroundStrikesPerRound = weightClassAvgData.groundStrikesPerRound || 2.0;
+
+      const normalizeValue = (fighterValue: number, weightClassValue: number) => {
+        if (weightClassValue === 0) return 50;
+        const ratio = fighterValue / weightClassValue;
+        return 50 + (50 * Math.tanh((ratio - 1) * 2));
+      };
+
+      const groundControlRating = normalizeValue(groundControlPercentage, 50);
+      const groundStrikingRating = normalizeValue(groundStrikingAccuracy, weightClassGroundStrikingAccuracy);
+      const groundVolumeRating = normalizeValue(groundStrikesPerRound, weightClassGroundStrikesPerRound);
+      
+      groundGameRating = (groundControlRating * 0.4) + (groundStrikingRating * 0.3) + (groundVolumeRating * 0.3);
+      groundGameRating = Math.min(100, Math.max(1, Math.round(groundGameRating)));
+    }
+
+    // Combine all ratings with the same weights as in GrapplingInfo
+    const combinedRating = (takedownRating * 0.35) + (submissionRating * 0.15) + (clinchRating * 0.2) + (groundGameRating * 0.3);
+    
+    return Math.min(100, Math.max(1, Math.round(combinedRating)));
+  }, [fighter, weightClassAvgData]);
 
   // Calculate comprehensive finish rating (1-100)
   const calculateFinishRating = React.useCallback((): number => {
@@ -1341,60 +1417,81 @@ export const useBasicInfo = (fighter: Fighter, weightClassAvgData?: any) => {
 
   // Calculate comprehensive defense rating (1-100)
   const calculateDefenseRating = React.useCallback((): number => {
-    const strikingStats = fighter.striking_stats;
-    if (!strikingStats || !weightClassAvgData) return 50; // Default to average if no data
+    // Helper function to normalize values to 1-99 scale
+    // For defense, lower absorption rates are better (better defense)
+    const normalizeValue = (fighterValue: number, weightClassValue: number) => {
+      if (weightClassValue === 0) {
+        // If no weight class data, use simple normalization
+        const maxValue = Math.max(fighterValue, 1);
+        return Math.min(99, Math.max(1, (fighterValue / maxValue) * 99));
+      }
+      
+      // For defense, we want to invert the logic - lower absorption = better defense
+      // Calculate percentage relative to weight class average
+      const percentage = (fighterValue / weightClassValue) * 100;
+      
+      // Invert the scale: lower absorption = higher rating
+      // 50% = 75 rating (better defense)
+      // 100% = 50 rating (average defense)
+      // 150% = 25 rating (worse defense)
+      // 200%+ = 1 rating (much worse defense)
+      let rating = 50 - (percentage - 100) * 0.5;
+      
+      // Cap between 1 and 99
+      return Math.min(99, Math.max(1, rating));
+    };
 
-    // Calculate fighter's total strikes absorbed
-    const fighterAbsorbed = (
-      (strikingStats.BodyKicksAbsorbed || 0) +
-      (strikingStats.CrossesAbsorbed || 0) +
-      (strikingStats.HeadKicksAbsorbed || 0) +
-      (strikingStats.HooksAbsorbed || 0) +
-      (strikingStats.JabsAbsorbed || 0) +
-      (strikingStats.LegKicksAbsorbed || 0) +
-      (strikingStats.OverhandsAbsorbed || 0) +
-      (strikingStats.StraightsAbsorbed || 0) +
-      (strikingStats.UppercutsAbsorbed || 0)
-    );
-
-    // Calculate weight class strikes absorbed
-    const weightClassAbsorbed = (
-      (weightClassAvgData.BodyKicksAbsorbed || 0) +
-      (weightClassAvgData.CrossesAbsorbed || 0) +
-      (weightClassAvgData.HeadKicksAbsorbed || 0) +
-      (weightClassAvgData.HooksAbsorbed || 0) +
-      (weightClassAvgData.JabsAbsorbed || 0) +
-      (weightClassAvgData.LegKicksAbsorbed || 0) +
-      (weightClassAvgData.OverhandsAbsorbed || 0) +
-      (weightClassAvgData.StraightsAbsorbed || 0) +
-      (weightClassAvgData.UppercutsAbsorbed || 0)
-    );
-
-    // Calculate strikes absorbed per minute for both fighter and weight class
     const fighterMinutes = fighter.MinutesTracked || 1;
-    const weightClassMinutes = weightClassAvgData.minutes || 1;
+    const weightClassMinutes = weightClassAvgData?.minutes || 1;
+
+    // Calculate individual component ratings
+    const bodyKicksDefenseRating = normalizeValue(
+      (fighter.striking_stats?.BodyKicksAbsorbed || 0) / fighterMinutes,
+      (weightClassAvgData?.BodyKicksAbsorbed || 0) / weightClassMinutes
+    );
+    const headKicksDefenseRating = normalizeValue(
+      (fighter.striking_stats?.HeadKicksAbsorbed || 0) / fighterMinutes,
+      (weightClassAvgData?.HeadKicksAbsorbed || 0) / weightClassMinutes
+    );
+    const hooksDefenseRating = normalizeValue(
+      (fighter.striking_stats?.HooksAbsorbed || 0) / fighterMinutes,
+      (weightClassAvgData?.HooksAbsorbed || 0) / weightClassMinutes
+    );
+    const jabsDefenseRating = normalizeValue(
+      (fighter.striking_stats?.JabsAbsorbed || 0) / fighterMinutes,
+      (weightClassAvgData?.JabsAbsorbed || 0) / weightClassMinutes
+    );
+    const legKicksDefenseRating = normalizeValue(
+      (fighter.striking_stats?.LegKicksAbsorbed || 0) / fighterMinutes,
+      (weightClassAvgData?.LegKicksAbsorbed || 0) / weightClassMinutes
+    );
+    const overhandsDefenseRating = normalizeValue(
+      (fighter.striking_stats?.OverhandsAbsorbed || 0) / fighterMinutes,
+      (weightClassAvgData?.OverhandsAbsorbed || 0) / weightClassMinutes
+    );
+    const straightsDefenseRating = normalizeValue(
+      (fighter.striking_stats?.StraightsAbsorbed || 0) / fighterMinutes,
+      (weightClassAvgData?.StraightsAbsorbed || 0) / weightClassMinutes
+    );
+    const uppercutsDefenseRating = normalizeValue(
+      (fighter.striking_stats?.UppercutsAbsorbed || 0) / fighterMinutes,
+      (weightClassAvgData?.UppercutsAbsorbed || 0) / weightClassMinutes
+    );
     
-    const fighterAbsorbedPerMinute = fighterAbsorbed / fighterMinutes;
-    const weightClassAbsorbedPerMinute = weightClassAbsorbed / weightClassMinutes;
-
-    // Prevent division by zero
-    if (weightClassAbsorbedPerMinute === 0) {
-      // If no weight class data, base rating on fighter's absorbed rate
-      // Lower absorbed rate = better defense = higher rating
-      const baseRating = Math.max(1, 100 - (fighterAbsorbedPerMinute * 10)); // Rough scaling
-      return Math.round(baseRating);
-    }
-
-    // Calculate defense ratio (lower absorbed = better defense)
-    // Invert the ratio so that absorbing fewer strikes than average = higher rating
-    const defenseRatio = weightClassAbsorbedPerMinute / (fighterAbsorbedPerMinute || 0.01);
-
-    // Convert to 1-100 scale with 50 as average
-    // Using tanh to create a smooth curve
-    const rating = 50 + (50 * Math.tanh((defenseRatio - 1) * 1.5));
-
-    // Ensure rating stays within 1-100 bounds
-    return Math.min(100, Math.max(1, Math.round(rating)));
+    // Combine all metrics for overall defense rating
+    // Weight more dangerous strikes more heavily
+    const overallDefenseRating = (
+      headKicksDefenseRating * 0.2 +      // Most dangerous
+      hooksDefenseRating * 0.15 +         // Very dangerous
+      overhandsDefenseRating * 0.15 +     // Very dangerous
+      uppercutsDefenseRating * 0.15 +     // Very dangerous
+      bodyKicksDefenseRating * 0.1 +      // Moderately dangerous
+      straightsDefenseRating * 0.1 +      // Moderately dangerous
+      legKicksDefenseRating * 0.1 +       // Less dangerous
+      jabsDefenseRating * 0.05            // Least dangerous
+    );
+    
+    return Math.round(overallDefenseRating);
   }, [fighter, weightClassAvgData]);
 
   // Calculate positional dominance rating (1-100)
@@ -1441,7 +1538,7 @@ export const useBasicInfo = (fighter: Fighter, weightClassAvgData?: any) => {
   const calculateOverallRating = React.useCallback((): { rating: number; archetype: string; strengths: string[]; weaknesses: string[] } => {
     const strikingRating = calculateStrikingRating();
     const aggressionRating = calculateAggressivenessRating();
-    const takedownRating = calculateTakedownRating();
+    const grapplingGrade = calculateGrapplingGrade();
     const defenseRating = calculateDefenseRating();
     const finishRating = calculateFinishRating();
     const positionRating = calculatePositionalRating();
@@ -1521,19 +1618,19 @@ export const useBasicInfo = (fighter: Fighter, weightClassAvgData?: any) => {
 
       // Use the actual ratings to determine style more accurately
       const strikingRating = calculateStrikingRating();
-      const takedownRating = calculateTakedownRating();
+      const grapplingGrade = calculateGrapplingGrade();
       const positionRating = calculatePositionalRating();
       const finishRating = calculateFinishRating();
       
       // Calculate style indicators with rating-based logic
       const strikingDominance = strikingRating >= 65;
-      const grapplingDominance = takedownRating >= 70 || positionRating >= 75;
+      const grapplingDominance = grapplingGrade >= 70 || positionRating >= 75;
       const finishingDominance = finishRating >= 60;
       
       // Determine primary style with priority for clear specialists
-      if (takedownRating >= 80 && positionRating >= 80) {
+      if (grapplingGrade >= 80 && positionRating >= 80) {
         return "grappler"; // Clear grappling specialist
-      } else if (strikingRating >= 80 && takedownRating <= 50) {
+      } else if (strikingRating >= 80 && grapplingGrade <= 50) {
         return "striker"; // Clear striking specialist
       } else if (finishRating >= 75 && (koWins + tkoWins) > subWins) {
         return "knockout_artist"; // Clear KO specialist
@@ -1557,61 +1654,62 @@ export const useBasicInfo = (fighter: Fighter, weightClassAvgData?: any) => {
     const fighterStyle = determineFighterStyle();
 
     // Dynamic weight calculation based on fighter style with specialist bonuses
+    // Core principle: striking, grappling, and defense are most important, followed by position, then aggression
     const getDynamicWeights = (style: string) => {
       switch (style) {
         case "striker":
           return {
-            striking: 0.40,    // Much higher for strikers
-            defense: 0.25,     // Still important
-            takedowns: 0.05,   // Much lower for strikers
-            aggression: 0.15,  // Important for strikers
-            finishes: 0.10,    // Important for strikers
-            position: 0.05     // Less important for strikers
+            striking: 0.35,    // Most important for strikers
+            defense: 0.25,     // Very important for all fighters
+            grappling: 0.10,   // Less important but still relevant
+            position: 0.15,    // Important for control
+            aggression: 0.10,  // Less important than core skills
+            finishes: 0.05     // Outcome-based, not skill-based
           };
         case "grappler":
           return {
-            striking: 0.10,    // Lower for grapplers
-            defense: 0.20,     // Still important
-            takedowns: 0.35,   // Much higher for grapplers
-            aggression: 0.05,  // Less important for grapplers
-            finishes: 0.15,    // Important for grapplers
-            position: 0.15     // Important for grapplers
+            striking: 0.15,    // Less important for grapplers
+            defense: 0.25,     // Very important for all fighters
+            grappling: 0.35,   // Most important for grapplers
+            position: 0.15,    // Important for control
+            aggression: 0.05,  // Less important than core skills
+            finishes: 0.05     // Outcome-based, not skill-based
           };
         case "knockout_artist":
           return {
-            striking: 0.35,    // High for KO artists
-            defense: 0.10,     // Can be lower for KO artists
-            takedowns: 0.05,   // Lower for KO artists
-            aggression: 0.25,  // Very important for KO artists
-            finishes: 0.20,    // Very important for KO artists
-            position: 0.05     // Less important for KO artists
+            striking: 0.35,    // Most important for KO artists
+            defense: 0.20,     // Important but can be sacrificed for offense
+            grappling: 0.10,   // Less important
+            position: 0.15,    // Important for control
+            aggression: 0.15,  // More important for KO artists
+            finishes: 0.05     // Outcome-based, not skill-based
           };
         case "submission_specialist":
           return {
-            striking: 0.05,    // Lower for submission specialists
-            defense: 0.20,     // Still important
-            takedowns: 0.30,   // High for submission specialists
-            aggression: 0.05,  // Less important
-            finishes: 0.30,    // Very important for submission specialists
-            position: 0.10     // Important for submission specialists
+            striking: 0.10,    // Less important for submission specialists
+            defense: 0.25,     // Very important for all fighters
+            grappling: 0.35,   // Most important for submission specialists
+            position: 0.15,    // Important for control
+            aggression: 0.10,  // Less important than core skills
+            finishes: 0.05     // Outcome-based, not skill-based
           };
         case "mixed":
           return {
-            striking: 0.25,    // Balanced
-            defense: 0.20,     // Balanced
-            takedowns: 0.20,   // Balanced
-            aggression: 0.15,  // Balanced
-            finishes: 0.12,    // Balanced
-            position: 0.08     // Balanced
+            striking: 0.30,    // Important for mixed fighters
+            defense: 0.25,     // Very important for all fighters
+            grappling: 0.25,   // Important for mixed fighters
+            position: 0.15,    // Important for control
+            aggression: 0.03,  // Less important than core skills
+            finishes: 0.02     // Outcome-based, not skill-based
           };
         default: // balanced
           return {
-            striking: 0.25,    // Default balanced weights
-            defense: 0.20,
-            takedowns: 0.18,
-            aggression: 0.15,
-            finishes: 0.12,
-            position: 0.10
+            striking: 0.30,    // Core skill - most important
+            defense: 0.25,     // Core skill - very important
+            grappling: 0.25,   // Core skill - very important
+            position: 0.15,    // Important for control
+            aggression: 0.03,  // Less important than core skills
+            finishes: 0.02     // Outcome-based, not skill-based
           };
       }
     };
@@ -1621,7 +1719,7 @@ export const useBasicInfo = (fighter: Fighter, weightClassAvgData?: any) => {
     const weightedRating = (
       strikingRating * weights.striking +
       defenseRating * weights.defense +
-      takedownRating * weights.takedowns +
+      grapplingGrade * weights.grappling +
       (typeof aggressionRating === 'number' ? aggressionRating : 50) * weights.aggression +
       finishRating * weights.finishes +
       positionRating * weights.position
@@ -1638,9 +1736,9 @@ export const useBasicInfo = (fighter: Fighter, weightClassAvgData?: any) => {
           if (defenseRating >= 70) bonus += 3;
           break;
         case "grappler":
-          if (takedownRating >= 75) bonus += 8;
+          if (grapplingGrade >= 75) bonus += 8;
           if (positionRating >= 75) bonus += 8;
-          if (takedownRating >= 80 && positionRating >= 80) bonus += 5;
+          if (grapplingGrade >= 80 && positionRating >= 80) bonus += 5;
           if (defenseRating >= 70) bonus += 3;
           break;
         case "knockout_artist":
@@ -1650,11 +1748,11 @@ export const useBasicInfo = (fighter: Fighter, weightClassAvgData?: any) => {
           break;
         case "submission_specialist":
           if (finishRating >= 75) bonus += 8;
-          if (takedownRating >= 70) bonus += 5;
+          if (grapplingGrade >= 70) bonus += 5;
           if (positionRating >= 70) bonus += 3;
           break;
         case "mixed":
-          if (strikingRating >= 70 && takedownRating >= 70) bonus += 8;
+          if (strikingRating >= 70 && grapplingGrade >= 70) bonus += 8;
           if (defenseRating >= 70) bonus += 5;
           break;
       }
@@ -1811,7 +1909,7 @@ export const useBasicInfo = (fighter: Fighter, weightClassAvgData?: any) => {
       const ratingWeaknesses = [
         { name: "Striking", rating: strikingRating },
         { name: "Defense", rating: defenseRating },
-        { name: "Takedowns", rating: takedownRating },
+        { name: "Grappling", rating: grapplingGrade },
         { name: "Aggression", rating: typeof aggressionRating === 'number' ? aggressionRating : 50 },
         { name: "Finishes", rating: finishRating },
         { name: "Position", rating: positionRating }
@@ -1827,7 +1925,7 @@ export const useBasicInfo = (fighter: Fighter, weightClassAvgData?: any) => {
       strengths: determineStrengths(),
       weaknesses: determineWeaknesses()
     };
-  }, [fighter, weightClassAvgData, calculateStrikingRating, calculateAggressivenessRating, calculateTakedownRating, calculateDefenseRating, calculateFinishRating, calculatePositionalRating]);
+  }, [fighter, weightClassAvgData, calculateStrikingRating, calculateAggressivenessRating, calculateGrapplingGrade, calculateDefenseRating, calculateFinishRating, calculatePositionalRating]);
 
   // Enhanced radar data preparation
   const prepareRadarData = React.useMemo(() => {
@@ -1857,11 +1955,11 @@ export const useBasicInfo = (fighter: Fighter, weightClassAvgData?: any) => {
         description: 'Finish rate effectiveness compared to weight class average'
       },
       {
-        subject: 'Takedowns',
-        value: calculateTakedownRating(),
+        subject: 'Grappling',
+        value: calculateGrapplingGrade(),
         ufc_average: 50, // Average is always 50 in our rating system
         fullMark: 100,
-        description: 'Takedown effectiveness based on success rate and frequency vs weight class'
+        description: 'Comprehensive grappling rating including takedowns, submissions, clinch, and ground game vs weight class'
       },
       {
         subject: 'Defense',
@@ -1878,7 +1976,7 @@ export const useBasicInfo = (fighter: Fighter, weightClassAvgData?: any) => {
         description: 'Positional dominance: 50=balanced, higher=more dominant positions, lower=more defensive'
       }
     ];
-  }, [calculateFinishRating, calculateStrikingRating, calculateAggressivenessRating, calculateTakedownRating, calculateDefenseRating, calculatePositionalRating]);
+  }, [calculateFinishRating, calculateStrikingRating, calculateAggressivenessRating, calculateGrapplingGrade, calculateDefenseRating, calculatePositionalRating]);
 
   return {
     hasPositionalData,
@@ -1888,7 +1986,7 @@ export const useBasicInfo = (fighter: Fighter, weightClassAvgData?: any) => {
     calculateStrikesPerMinute,
     calculateWeightClassStrikesPerMinute,
     calculateStrikingRating,
-    calculateTakedownRating,
+    calculateGrapplingGrade,
     calculateDefenseRating,
     calculateFinishRating,
     calculatePositionalRating,

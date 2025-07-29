@@ -664,7 +664,213 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
     },
   };
 
+  // Calculate strike output rating based on SPM data
+  const strikeOutputRating = React.useMemo(() => {
+    // Helper function to normalize values to 1-99 scale
+    const normalizeValue = (fighterValue: number, weightClassValue: number) => {
+      if (weightClassValue === 0) {
+        // If no weight class data, use simple normalization
+        const maxValue = Math.max(fighterValue, 1);
+        return Math.min(99, Math.max(1, (fighterValue / maxValue) * 99));
+      }
+      
+      // Calculate percentage relative to weight class average
+      const percentage = (fighterValue / weightClassValue) * 100;
+      
+      // Convert to 1-99 scale
+      // 50% = 25 rating (below average)
+      // 100% = 50 rating (average)
+      // 150% = 75 rating (above average)
+      // 200%+ = 99 rating (exceptional)
+      let rating = 50 + (percentage - 100) * 0.5;
+      
+      // Cap between 1 and 99
+      return Math.min(99, Math.max(1, rating));
+    };
 
+    // Calculate SPM values
+    const totalStrikesSPM = excludeGroundStrikes 
+      ? ((fighter.total_stats?.TotalStrikesLanded || 0) - (fighter.ground_stats?.TotalGroundStrikesMade || 0)) / (fighter.MinutesTracked || 1)
+      : (fighter.total_stats?.TotalStrikesLanded || 0) / (fighter.MinutesTracked || 1);
+    
+    const punchesSPM = (fighter.total_stats?.TotalPunchesLanded || 0) / (fighter.MinutesTracked || 1);
+    const kicksSPM = (fighter.total_stats?.TotalKicksLanded || 0) / (fighter.MinutesTracked || 1);
+    const elbowsSPM = (fighter.total_stats?.TotalElbowsMade || 0) / (fighter.MinutesTracked || 1);
+
+    // Calculate weight class SPM values
+    const weightClassTotalStrikesSPM = weightClassAvgData 
+      ? excludeGroundStrikes
+        ? ((weightClassAvgData.TotalStrikesLanded || 0) - (weightClassAvgData.TotalGroundStrikesMade || 0)) / (weightClassAvgData.minutes || 1)
+        : (weightClassAvgData.TotalStrikesLanded || 0) / (weightClassAvgData.minutes || 1)
+      : 0;
+    const weightClassPunchesSPM = weightClassAvgData ? (weightClassAvgData.TotalPunchesLanded || 0) / (weightClassAvgData.minutes || 1) : 0;
+    const weightClassKicksSPM = weightClassAvgData ? (weightClassAvgData.TotalKicksLanded || 0) / (weightClassAvgData.minutes || 1) : 0;
+    const weightClassElbowsSPM = weightClassAvgData ? (weightClassAvgData.TotalElbowsMade || 0) / (weightClassAvgData.minutes || 1) : 0;
+
+    // Calculate individual component ratings
+    const totalStrikesRating = normalizeValue(totalStrikesSPM, weightClassTotalStrikesSPM);
+    const punchesRating = normalizeValue(punchesSPM, weightClassPunchesSPM);
+    const kicksRating = normalizeValue(kicksSPM, weightClassKicksSPM);
+    const elbowsRating = normalizeValue(elbowsSPM, weightClassElbowsSPM);
+    
+    // Combine all four metrics for overall strike output rating
+    // Weight total strikes more heavily as it's the primary metric
+    const overallStrikeOutputRating = (totalStrikesRating * 0.4) + (punchesRating * 0.3) + (kicksRating * 0.2) + (elbowsRating * 0.1);
+    
+    return overallStrikeOutputRating;
+  }, [fighter, weightClassAvgData, excludeGroundStrikes]);
+
+  // Calculate striking accuracy rating based on accuracy data
+  const strikingAccuracyRating = React.useMemo(() => {
+    // Helper function to normalize values to 1-99 scale
+    const normalizeValue = (fighterValue: number, weightClassValue: number) => {
+      if (weightClassValue === 0) {
+        // If no weight class data, use simple normalization
+        const maxValue = Math.max(fighterValue, 1);
+        return Math.min(99, Math.max(1, (fighterValue / maxValue) * 99));
+      }
+      
+      // Calculate percentage relative to weight class average
+      const percentage = (fighterValue / weightClassValue) * 100;
+      
+      // Convert to 1-99 scale
+      // 50% = 25 rating (below average)
+      // 100% = 50 rating (average)
+      // 150% = 75 rating (above average)
+      // 200%+ = 99 rating (exceptional)
+      let rating = 50 + (percentage - 100) * 0.5;
+      
+      // Cap between 1 and 99
+      return Math.min(99, Math.max(1, rating));
+    };
+
+    // Calculate individual component ratings
+    const overallStrikingRating = normalizeValue(accuracyMetrics.overallStrikingAccuracy, weightClassAccuracyMetrics.overallStrikingAccuracy);
+    const punchAccuracyRating = normalizeValue(accuracyMetrics.punchAccuracy, weightClassAccuracyMetrics.punchAccuracy);
+    const kickAccuracyRating = normalizeValue(accuracyMetrics.kickAccuracy, weightClassAccuracyMetrics.kickAccuracy);
+    const elbowAccuracyRating = normalizeValue(accuracyMetrics.elbowAccuracy, weightClassAccuracyMetrics.elbowAccuracy);
+    
+    // Combine all four metrics for overall striking accuracy rating
+    // Weight overall striking more heavily as it's the primary metric
+    const overallStrikingAccuracyRating = (overallStrikingRating * 0.4) + (punchAccuracyRating * 0.3) + (kickAccuracyRating * 0.2) + (elbowAccuracyRating * 0.1);
+    
+    return overallStrikingAccuracyRating;
+  }, [accuracyMetrics, weightClassAccuracyMetrics]);
+
+  // Calculate power rating based on power data
+  const powerRating = React.useMemo(() => {
+    // Helper function to normalize values to 1-99 scale
+    const normalizeValue = (fighterValue: number, weightClassValue: number) => {
+      if (weightClassValue === 0) {
+        // If no weight class data, use simple normalization
+        const maxValue = Math.max(fighterValue, 1);
+        return Math.min(99, Math.max(1, (fighterValue / maxValue) * 99));
+      }
+      
+      // Calculate percentage relative to weight class average
+      const percentage = (fighterValue / weightClassValue) * 100;
+      
+      // Convert to 1-99 scale
+      // 50% = 25 rating (below average)
+      // 100% = 50 rating (average)
+      // 150% = 75 rating (above average)
+      // 200%+ = 99 rating (exceptional)
+      let rating = 50 + (percentage - 100) * 0.5;
+      
+      // Cap between 1 and 99
+      return Math.min(99, Math.max(1, rating));
+    };
+
+    // Calculate individual component ratings
+    const powerPunchAccuracyRating = normalizeValue(powerMetrics.powerPunchAccuracy, weightClassPowerMetrics.powerPunchAccuracy);
+    const powerStrikesPerMinuteRating = normalizeValue(powerMetrics.powerStrikesLandedPerMinute, weightClassPowerMetrics.powerStrikesLandedPerMinute);
+    const koTkoWinRateRating = normalizeValue(powerMetrics.koTkoWinRatePerFight, weightClassPowerMetrics.koTkoWinRatePerFight);
+    
+    // Combine all three metrics for overall power rating
+    // Weight power strikes per minute more heavily as it's the primary power metric
+    const overallPowerRating = (powerStrikesPerMinuteRating * 0.4) + (powerPunchAccuracyRating * 0.3) + (koTkoWinRateRating * 0.3);
+    
+    return overallPowerRating;
+  }, [powerMetrics, weightClassPowerMetrics]);
+
+  // Calculate defense rating based on defense data
+  const defenseRating = React.useMemo(() => {
+    // Helper function to normalize values to 1-99 scale
+    // For defense, lower absorption rates are better (better defense)
+    const normalizeValue = (fighterValue: number, weightClassValue: number) => {
+      if (weightClassValue === 0) {
+        // If no weight class data, use simple normalization
+        const maxValue = Math.max(fighterValue, 1);
+        return Math.min(99, Math.max(1, (fighterValue / maxValue) * 99));
+      }
+      
+      // For defense, we want to invert the logic - lower absorption = better defense
+      // Calculate percentage relative to weight class average
+      const percentage = (fighterValue / weightClassValue) * 100;
+      
+      // Invert the scale: lower absorption = higher rating
+      // 50% = 75 rating (better defense)
+      // 100% = 50 rating (average defense)
+      // 150% = 25 rating (worse defense)
+      // 200%+ = 1 rating (much worse defense)
+      let rating = 50 - (percentage - 100) * 0.5;
+      
+      // Cap between 1 and 99
+      return Math.min(99, Math.max(1, rating));
+    };
+
+    const fighterMinutes = fighter.MinutesTracked || 1;
+    const weightClassMinutes = weightClassAvgData?.minutes || 1;
+
+    // Calculate individual component ratings
+    const bodyKicksDefenseRating = normalizeValue(
+      (fighter.striking_stats?.BodyKicksAbsorbed || 0) / fighterMinutes,
+      (weightClassAvgData?.BodyKicksAbsorbed || 0) / weightClassMinutes
+    );
+    const headKicksDefenseRating = normalizeValue(
+      (fighter.striking_stats?.HeadKicksAbsorbed || 0) / fighterMinutes,
+      (weightClassAvgData?.HeadKicksAbsorbed || 0) / weightClassMinutes
+    );
+    const hooksDefenseRating = normalizeValue(
+      (fighter.striking_stats?.HooksAbsorbed || 0) / fighterMinutes,
+      (weightClassAvgData?.HooksAbsorbed || 0) / weightClassMinutes
+    );
+    const jabsDefenseRating = normalizeValue(
+      (fighter.striking_stats?.JabsAbsorbed || 0) / fighterMinutes,
+      (weightClassAvgData?.JabsAbsorbed || 0) / weightClassMinutes
+    );
+    const legKicksDefenseRating = normalizeValue(
+      (fighter.striking_stats?.LegKicksAbsorbed || 0) / fighterMinutes,
+      (weightClassAvgData?.LegKicksAbsorbed || 0) / weightClassMinutes
+    );
+    const overhandsDefenseRating = normalizeValue(
+      (fighter.striking_stats?.OverhandsAbsorbed || 0) / fighterMinutes,
+      (weightClassAvgData?.OverhandsAbsorbed || 0) / weightClassMinutes
+    );
+    const straightsDefenseRating = normalizeValue(
+      (fighter.striking_stats?.StraightsAbsorbed || 0) / fighterMinutes,
+      (weightClassAvgData?.StraightsAbsorbed || 0) / weightClassMinutes
+    );
+    const uppercutsDefenseRating = normalizeValue(
+      (fighter.striking_stats?.UppercutsAbsorbed || 0) / fighterMinutes,
+      (weightClassAvgData?.UppercutsAbsorbed || 0) / weightClassMinutes
+    );
+    
+    // Combine all metrics for overall defense rating
+    // Weight more dangerous strikes more heavily
+    const overallDefenseRating = (
+      headKicksDefenseRating * 0.2 +      // Most dangerous
+      hooksDefenseRating * 0.15 +         // Very dangerous
+      overhandsDefenseRating * 0.15 +     // Very dangerous
+      uppercutsDefenseRating * 0.15 +     // Very dangerous
+      bodyKicksDefenseRating * 0.1 +      // Moderately dangerous
+      straightsDefenseRating * 0.1 +      // Moderately dangerous
+      legKicksDefenseRating * 0.1 +       // Less dangerous
+      jabsDefenseRating * 0.05            // Least dangerous
+    );
+    
+    return overallDefenseRating;
+  }, [fighter, weightClassAvgData]);
 
   return (
     <Paper 
@@ -1707,109 +1913,237 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                  Strikes Per Minute Radar Analysis
                </Typography>
                
-               <Box sx={{
-                 p: 4,
-                 borderRadius: '12px',
-                 bgcolor: 'rgba(10, 14, 23, 0.4)',
-                 border: '1px solid rgba(0, 240, 255, 0.15)',
-                 position: 'relative',
-                 overflow: 'hidden',
-                 '&::before': {
-                   content: '""',
-                   position: 'absolute',
-                   top: 0,
-                   left: 0,
-                   right: 0,
-                   height: '1px',
-                   background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
-                   opacity: 0.5,
-                 }
-               }}>
-                 <Box sx={{ 
-                   height: 400, 
-                   width: '100%', 
-                   position: 'relative',
-                   display: 'flex',
-                   alignItems: 'center',
-                   justifyContent: 'center'
-                 }}>
-                   <ResponsiveContainer>
-                     <RadarChart data={prepareSPMRadarData()} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
-                       <PolarGrid 
-                         stroke="rgba(0, 240, 255, 0.1)"
-                         gridType="circle"
-                       />
-                       <PolarAngleAxis 
-                         dataKey="subject" 
-                         tick={{ 
-                           fill: '#fff',
-                           fontSize: 12,
-                           fontWeight: 500,
-                         }}
-                         stroke="rgba(0, 240, 255, 0.2)"
-                       />
-                       <PolarRadiusAxis 
-                         angle={90} 
-                         domain={[0, 100]}
-                         tick={{ 
-                           fill: 'rgba(255, 255, 255, 0.5)',
-                           fontSize: 10 
-                         }}
-                         stroke="rgba(0, 240, 255, 0.1)"
-                       />
-                       {/* Weight Class Average Radar */}
-                       <Radar
-                         name="Weight Class Average"
-                         dataKey="weightClassValue"
-                         stroke="#FF3864"
-                         fill="#FF3864"
-                         fillOpacity={0.15}
-                       />
-                       {/* Fighter Stats Radar */}
-                       <Radar
-                         name="Fighter Stats"
-                         dataKey="value"
-                         stroke="#00F0FF"
-                         fill="#00F0FF"
-                         fillOpacity={0.3}
-                       />
-                       <RechartsTooltip content={<CustomTooltip />} />
-                     </RadarChart>
-                   </ResponsiveContainer>
-                   
-                   {/* Legend */}
-                   <Box 
-                     sx={{ 
-                       position: 'absolute',
-                       bottom: 10,
-                       left: '50%',
-                       transform: 'translateX(-50%)',
+               <Grid container spacing={3}>
+                 {/* Strike Output Rating Display */}
+                 <Grid item xs={12} md={4}>
+                   <Box sx={{
+                     display: 'flex',
+                     flexDirection: 'column',
+                     alignItems: 'center',
+                     justifyContent: 'center',
+                     height: '100%',
+                     minHeight: 200,
+                   }}>
+                     <Typography sx={{
+                       color: 'rgba(255, 255, 255, 0.8)',
+                       fontSize: '1rem',
+                       fontWeight: 600,
+                       mb: 2,
+                       textAlign: 'center',
+                     }}>
+                       Strike Output Rating
+                     </Typography>
+                     
+                     {/* Rating Circle */}
+                     <Box sx={{
+                       position: 'relative',
                        display: 'flex',
-                       gap: 3,
-                       bgcolor: 'rgba(10, 14, 23, 0.9)',
-                       p: 1,
-                       borderRadius: '6px',
-                       border: '1px solid rgba(0, 240, 255, 0.2)',
-                       backdropFilter: 'blur(5px)',
-                     }}
-                   >
-                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                       <Box sx={{ 
-                         width: 12, 
-                         height: 12, 
-                         bgcolor: '#00F0FF',
+                       alignItems: 'center',
+                       justifyContent: 'center',
+                       width: 140,
+                       height: 140,
+                       borderRadius: '50%',
+                       background: 'linear-gradient(135deg, rgba(10, 14, 23, 0.8) 0%, rgba(20, 30, 50, 0.6) 100%)',
+                       border: '2px solid rgba(0, 240, 255, 0.2)',
+                       boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.3), 0 0 30px rgba(0, 240, 255, 0.1)',
+                       '&::before': {
+                         content: '""',
+                         position: 'absolute',
+                         top: '50%',
+                         left: '50%',
+                         transform: 'translate(-50%, -50%)',
+                         width: '120px',
+                         height: '120px',
                          borderRadius: '50%',
-                         boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
-                       }} />
-                       <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
+                         background: 'conic-gradient(from 0deg, #00F0FF 0deg, #00F0FF ' + (strikeOutputRating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) ' + (strikeOutputRating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) 360deg)',
+                         zIndex: 1,
+                       },
+                       '&::after': {
+                         content: '""',
+                         position: 'absolute',
+                         top: '50%',
+                         left: '50%',
+                         transform: 'translate(-50%, -50%)',
+                         width: '100px',
+                         height: '100px',
+                         borderRadius: '50%',
+                         background: 'rgba(10, 14, 23, 0.95)',
+                         border: '1px solid rgba(0, 240, 255, 0.15)',
+                         zIndex: 2,
+                       }
+                     }}>
+                       {/* Rating Text */}
+                       <Box sx={{
+                         position: 'relative',
+                         zIndex: 3,
+                         display: 'flex',
+                         flexDirection: 'column',
+                         alignItems: 'center',
+                         justifyContent: 'center',
+                       }}>
+                         <Typography
+                           sx={{
+                             fontSize: '2.2rem',
+                             fontWeight: 800,
+                             color: '#00F0FF',
+                             fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                             letterSpacing: '0.1em',
+                             lineHeight: 1,
+                             textShadow: '0 0 15px rgba(0, 240, 255, 0.5)',
+                           }}
+                         >
+                           {strikeOutputRating.toFixed(0)}
+                         </Typography>
+                         <Typography
+                           sx={{
+                             color: 'rgba(255, 255, 255, 0.7)',
+                             fontSize: '0.75rem',
+                             fontWeight: 600,
+                             textTransform: 'uppercase',
+                             letterSpacing: '0.15em',
+                             marginTop: '-2px',
+                             fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                           }}
+                         >
+                           Rating
+                         </Typography>
+                       </Box>
                      </Box>
-                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                       <Box sx={{ width: 12, height: 12, bgcolor: '#FF3864', borderRadius: '50%', opacity: 0.8 }} />
-                       <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>Weight Class Avg</Typography>
+                     
+                     {/* Subtle glow effect */}
+                     <Box sx={{
+                       position: 'absolute',
+                       top: '50%',
+                       left: '50%',
+                       transform: 'translate(-50%, -50%)',
+                       width: '160px',
+                       height: '160px',
+                       borderRadius: '50%',
+                       background: 'radial-gradient(circle, rgba(0, 240, 255, 0.1) 0%, transparent 70%)',
+                       zIndex: 0,
+                     }} />
+                   </Box>
+                 </Grid>
+
+                 {/* Radar Chart */}
+                 <Grid item xs={12} md={8}>
+                   <Box sx={{
+                     p: 4,
+                     borderRadius: '12px',
+                     bgcolor: 'rgba(10, 14, 23, 0.4)',
+                     border: '1px solid rgba(0, 240, 255, 0.15)',
+                     position: 'relative',
+                     overflow: 'hidden',
+                     '&::before': {
+                       content: '""',
+                       position: 'absolute',
+                       top: 0,
+                       left: 0,
+                       right: 0,
+                       height: '1px',
+                       background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+                       opacity: 0.5,
+                     }
+                   }}>
+                     <Box sx={{ 
+                       height: 400, 
+                       width: '100%', 
+                       position: 'relative',
+                       display: 'flex',
+                       alignItems: 'center',
+                       justifyContent: 'center'
+                     }}>
+                       <ResponsiveContainer>
+                         <RadarChart data={prepareSPMRadarData()} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+                           <PolarGrid 
+                             stroke="rgba(0, 240, 255, 0.1)"
+                             gridType="circle"
+                           />
+                           <PolarAngleAxis 
+                             dataKey="subject" 
+                             tick={{ 
+                               fill: '#fff',
+                               fontSize: 12,
+                               fontWeight: 500,
+                             }}
+                             stroke="rgba(0, 240, 255, 0.2)"
+                           />
+                           <PolarRadiusAxis 
+                             angle={90} 
+                             domain={[0, 100]}
+                             tick={{ 
+                               fill: 'rgba(255, 255, 255, 0.5)',
+                               fontSize: 10 
+                             }}
+                             stroke="rgba(0, 240, 255, 0.1)"
+                           />
+                           {/* Weight Class Average Radar */}
+                           <Radar
+                             name="Weight Class Average"
+                             dataKey="weightClassValue"
+                             stroke="#FF3864"
+                             fill="#FF3864"
+                             fillOpacity={0.15}
+                           />
+                           {/* Fighter Stats Radar */}
+                           <Radar
+                             name="Fighter Stats"
+                             dataKey="value"
+                             stroke="#00F0FF"
+                             fill="#00F0FF"
+                             fillOpacity={0.3}
+                           />
+                           <RechartsTooltip content={<CustomTooltip />} />
+                         </RadarChart>
+                       </ResponsiveContainer>
+                       
+                       {/* Legend */}
+                       <Box 
+                         sx={{ 
+                           position: 'absolute',
+                           bottom: 10,
+                           left: '50%',
+                           transform: 'translateX(-50%)',
+                           display: 'flex',
+                           gap: 3,
+                           bgcolor: 'rgba(10, 14, 23, 0.9)',
+                           p: 1,
+                           borderRadius: '6px',
+                           border: '1px solid rgba(0, 240, 255, 0.2)',
+                           backdropFilter: 'blur(5px)',
+                         }}
+                       >
+                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                           <Box sx={{ 
+                             width: 12, 
+                             height: 12, 
+                             bgcolor: '#00F0FF',
+                             borderRadius: '50%',
+                             boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                           }} />
+                           <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
+                         </Box>
+                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                           <Box sx={{ width: 12, height: 12, bgcolor: '#FF3864', borderRadius: '50%', opacity: 0.8 }} />
+                           <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>Weight Class Avg</Typography>
+                         </Box>
+                       </Box>
                      </Box>
                    </Box>
-                 </Box>
-               </Box>
+                 </Grid>
+
+                 {/* Rating Description */}
+                 <Grid item xs={12}>
+                   <Typography sx={{
+                     color: 'rgba(255, 255, 255, 0.8)',
+                     fontSize: '0.95rem',
+                     lineHeight: 1.6,
+                     textAlign: 'center',
+                   }}>
+                     Comprehensive strike output rating based on strikes per minute across all techniques compared to weight class averages. Shows your overall striking volume and effectiveness.
+                   </Typography>
+                 </Grid>
+               </Grid>
              </Box>
                </Box>
              </Collapse>
@@ -2373,109 +2707,237 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                  Striking Accuracy Radar Analysis
                </Typography>
                
-               <Box sx={{
-                 p: 4,
-                 borderRadius: '12px',
-                 bgcolor: 'rgba(10, 14, 23, 0.4)',
-                 border: '1px solid rgba(0, 240, 255, 0.15)',
-                 position: 'relative',
-                 overflow: 'hidden',
-                 '&::before': {
-                   content: '""',
-                   position: 'absolute',
-                   top: 0,
-                   left: 0,
-                   right: 0,
-                   height: '1px',
-                   background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
-                   opacity: 0.5,
-                 }
-               }}>
-                 <Box sx={{ 
-                   height: 400, 
-                   width: '100%', 
-                   position: 'relative',
-                   display: 'flex',
-                   alignItems: 'center',
-                   justifyContent: 'center'
-                 }}>
-                   <ResponsiveContainer>
-                     <RadarChart data={prepareAccuracyRadarData()} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
-                       <PolarGrid 
-                         stroke="rgba(0, 240, 255, 0.1)"
-                         gridType="circle"
-                       />
-                       <PolarAngleAxis 
-                         dataKey="subject" 
-                         tick={{ 
-                           fill: '#fff',
-                           fontSize: 12,
-                           fontWeight: 500,
-                         }}
-                         stroke="rgba(0, 240, 255, 0.2)"
-                       />
-                       <PolarRadiusAxis 
-                         angle={90} 
-                         domain={[0, 100]}
-                         tick={{ 
-                           fill: 'rgba(255, 255, 255, 0.5)',
-                           fontSize: 10 
-                         }}
-                         stroke="rgba(0, 240, 255, 0.1)"
-                       />
-                       {/* Weight Class Average Radar */}
-                       <Radar
-                         name="Weight Class Average"
-                         dataKey="weightClassValue"
-                         stroke="#FF3864"
-                         fill="#FF3864"
-                         fillOpacity={0.15}
-                       />
-                       {/* Fighter Stats Radar */}
-                       <Radar
-                         name="Fighter Stats"
-                         dataKey="value"
-                         stroke="#00F0FF"
-                         fill="#00F0FF"
-                         fillOpacity={0.3}
-                       />
-                       <RechartsTooltip content={<CustomTooltip />} />
-                     </RadarChart>
-                   </ResponsiveContainer>
-                   
-                   {/* Legend */}
-                   <Box 
-                     sx={{ 
-                       position: 'absolute',
-                       bottom: 10,
-                       left: '50%',
-                       transform: 'translateX(-50%)',
+               <Grid container spacing={3}>
+                 {/* Striking Accuracy Rating Display */}
+                 <Grid item xs={12} md={4}>
+                   <Box sx={{
+                     display: 'flex',
+                     flexDirection: 'column',
+                     alignItems: 'center',
+                     justifyContent: 'center',
+                     height: '100%',
+                     minHeight: 200,
+                   }}>
+                     <Typography sx={{
+                       color: 'rgba(255, 255, 255, 0.8)',
+                       fontSize: '1rem',
+                       fontWeight: 600,
+                       mb: 2,
+                       textAlign: 'center',
+                     }}>
+                       Striking Accuracy Rating
+                     </Typography>
+                     
+                     {/* Rating Circle */}
+                     <Box sx={{
+                       position: 'relative',
                        display: 'flex',
-                       gap: 3,
-                       bgcolor: 'rgba(10, 14, 23, 0.9)',
-                       p: 1,
-                       borderRadius: '6px',
-                       border: '1px solid rgba(0, 240, 255, 0.2)',
-                       backdropFilter: 'blur(5px)',
-                     }}
-                   >
-                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                       <Box sx={{ 
-                         width: 12, 
-                         height: 12, 
-                         bgcolor: '#00F0FF',
+                       alignItems: 'center',
+                       justifyContent: 'center',
+                       width: 140,
+                       height: 140,
+                       borderRadius: '50%',
+                       background: 'linear-gradient(135deg, rgba(10, 14, 23, 0.8) 0%, rgba(20, 30, 50, 0.6) 100%)',
+                       border: '2px solid rgba(0, 240, 255, 0.2)',
+                       boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.3), 0 0 30px rgba(0, 240, 255, 0.1)',
+                       '&::before': {
+                         content: '""',
+                         position: 'absolute',
+                         top: '50%',
+                         left: '50%',
+                         transform: 'translate(-50%, -50%)',
+                         width: '120px',
+                         height: '120px',
                          borderRadius: '50%',
-                         boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
-                       }} />
-                       <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
+                         background: 'conic-gradient(from 0deg, #00F0FF 0deg, #00F0FF ' + (strikingAccuracyRating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) ' + (strikingAccuracyRating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) 360deg)',
+                         zIndex: 1,
+                       },
+                       '&::after': {
+                         content: '""',
+                         position: 'absolute',
+                         top: '50%',
+                         left: '50%',
+                         transform: 'translate(-50%, -50%)',
+                         width: '100px',
+                         height: '100px',
+                         borderRadius: '50%',
+                         background: 'rgba(10, 14, 23, 0.95)',
+                         border: '1px solid rgba(0, 240, 255, 0.15)',
+                         zIndex: 2,
+                       }
+                     }}>
+                       {/* Rating Text */}
+                       <Box sx={{
+                         position: 'relative',
+                         zIndex: 3,
+                         display: 'flex',
+                         flexDirection: 'column',
+                         alignItems: 'center',
+                         justifyContent: 'center',
+                       }}>
+                         <Typography
+                           sx={{
+                             fontSize: '2.2rem',
+                             fontWeight: 800,
+                             color: '#00F0FF',
+                             fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                             letterSpacing: '0.1em',
+                             lineHeight: 1,
+                             textShadow: '0 0 15px rgba(0, 240, 255, 0.5)',
+                           }}
+                         >
+                           {strikingAccuracyRating.toFixed(0)}
+                         </Typography>
+                         <Typography
+                           sx={{
+                             color: 'rgba(255, 255, 255, 0.7)',
+                             fontSize: '0.75rem',
+                             fontWeight: 600,
+                             textTransform: 'uppercase',
+                             letterSpacing: '0.15em',
+                             marginTop: '-2px',
+                             fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                           }}
+                         >
+                           Rating
+                         </Typography>
+                       </Box>
                      </Box>
-                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                       <Box sx={{ width: 12, height: 12, bgcolor: '#FF3864', borderRadius: '50%', opacity: 0.8 }} />
-                       <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>Weight Class Avg</Typography>
+                     
+                     {/* Subtle glow effect */}
+                     <Box sx={{
+                       position: 'absolute',
+                       top: '50%',
+                       left: '50%',
+                       transform: 'translate(-50%, -50%)',
+                       width: '160px',
+                       height: '160px',
+                       borderRadius: '50%',
+                       background: 'radial-gradient(circle, rgba(0, 240, 255, 0.1) 0%, transparent 70%)',
+                       zIndex: 0,
+                     }} />
+                   </Box>
+                 </Grid>
+
+                 {/* Radar Chart */}
+                 <Grid item xs={12} md={8}>
+                   <Box sx={{
+                     p: 4,
+                     borderRadius: '12px',
+                     bgcolor: 'rgba(10, 14, 23, 0.4)',
+                     border: '1px solid rgba(0, 240, 255, 0.15)',
+                     position: 'relative',
+                     overflow: 'hidden',
+                     '&::before': {
+                       content: '""',
+                       position: 'absolute',
+                       top: 0,
+                       left: 0,
+                       right: 0,
+                       height: '1px',
+                       background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+                       opacity: 0.5,
+                     }
+                   }}>
+                     <Box sx={{ 
+                       height: 400, 
+                       width: '100%', 
+                       position: 'relative',
+                       display: 'flex',
+                       alignItems: 'center',
+                       justifyContent: 'center'
+                     }}>
+                       <ResponsiveContainer>
+                         <RadarChart data={prepareAccuracyRadarData()} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+                           <PolarGrid 
+                             stroke="rgba(0, 240, 255, 0.1)"
+                             gridType="circle"
+                           />
+                           <PolarAngleAxis 
+                             dataKey="subject" 
+                             tick={{ 
+                               fill: '#fff',
+                               fontSize: 12,
+                               fontWeight: 500,
+                             }}
+                             stroke="rgba(0, 240, 255, 0.2)"
+                           />
+                           <PolarRadiusAxis 
+                             angle={90} 
+                             domain={[0, 100]}
+                             tick={{ 
+                               fill: 'rgba(255, 255, 255, 0.5)',
+                               fontSize: 10 
+                             }}
+                             stroke="rgba(0, 240, 255, 0.1)"
+                           />
+                           {/* Weight Class Average Radar */}
+                           <Radar
+                             name="Weight Class Average"
+                             dataKey="weightClassValue"
+                             stroke="#FF3864"
+                             fill="#FF3864"
+                             fillOpacity={0.15}
+                           />
+                           {/* Fighter Stats Radar */}
+                           <Radar
+                             name="Fighter Stats"
+                             dataKey="value"
+                             stroke="#00F0FF"
+                             fill="#00F0FF"
+                             fillOpacity={0.3}
+                           />
+                           <RechartsTooltip content={<CustomTooltip />} />
+                         </RadarChart>
+                       </ResponsiveContainer>
+                       
+                       {/* Legend */}
+                       <Box 
+                         sx={{ 
+                           position: 'absolute',
+                           bottom: 10,
+                           left: '50%',
+                           transform: 'translateX(-50%)',
+                           display: 'flex',
+                           gap: 3,
+                           bgcolor: 'rgba(10, 14, 23, 0.9)',
+                           p: 1,
+                           borderRadius: '6px',
+                           border: '1px solid rgba(0, 240, 255, 0.2)',
+                           backdropFilter: 'blur(5px)',
+                         }}
+                       >
+                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                           <Box sx={{ 
+                             width: 12, 
+                             height: 12, 
+                             bgcolor: '#00F0FF',
+                             borderRadius: '50%',
+                             boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                           }} />
+                           <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
+                         </Box>
+                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                           <Box sx={{ width: 12, height: 12, bgcolor: '#FF3864', borderRadius: '50%', opacity: 0.8 }} />
+                           <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>Weight Class Avg</Typography>
+                         </Box>
+                       </Box>
                      </Box>
                    </Box>
-                 </Box>
-               </Box>
+                 </Grid>
+
+                 {/* Rating Description */}
+                 <Grid item xs={12}>
+                   <Typography sx={{
+                     color: 'rgba(255, 255, 255, 0.8)',
+                     fontSize: '0.95rem',
+                     lineHeight: 1.6,
+                     textAlign: 'center',
+                   }}>
+                     Comprehensive striking accuracy rating based on precision across all techniques compared to weight class averages. Shows your overall striking efficiency and technical proficiency.
+                   </Typography>
+                 </Grid>
+               </Grid>
              </Box>
                </Box>
              </Collapse>
@@ -2870,31 +3332,31 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                               {metric.label === 'Power Strikes Landed Per Minute' ? `${metric.weightClassValue.toFixed(2)}/min` : `${metric.weightClassValue}%`}
                             </span>
                           </Typography>
-                          <Box 
-                            sx={{ 
-                              height: 6,
-                              borderRadius: 3,
-                              bgcolor: 'rgba(10, 14, 23, 0.6)',
-                              border: '1px solid rgba(255, 56, 100, 0.1)',
-                              overflow: 'hidden',
-                              position: 'relative',
-                            }}
-                          >
-                            <Box 
-                              sx={{
-                                width: metric.label === 'Power Strikes Landed Per Minute' 
-                                  ? '50%'
-                                  : `${metric.weightClassValue}%`,
-                                height: '100%',
-                                background: 'linear-gradient(90deg, #FF3864, #CC1F41)',
-                                borderRadius: 3,
-                                transition: 'width 0.3s ease',
-                                opacity: 0.8,
-                              }}
-                            />
-                          </Box>
-                        </>
-                      )}
+                        <Box 
+                          sx={{ 
+                            height: 6,
+                            borderRadius: 3,
+                            bgcolor: 'rgba(10, 14, 23, 0.6)',
+                            border: '1px solid rgba(255, 56, 100, 0.1)',
+                            overflow: 'hidden',
+                            position: 'relative',
+                          }}
+                        >
+                                                    <Box 
+                          sx={{
+                            width: metric.label === 'Power Strikes Landed Per Minute' 
+                              ? '50%'
+                              : `${metric.weightClassValue}%`,
+                            height: '100%',
+                            background: 'linear-gradient(90deg, #FF3864, #CC1F41)',
+                            borderRadius: 3,
+                            transition: 'width 0.3s ease',
+                            opacity: 0.8,
+                          }}
+                        />
+                        </Box>
+                      </>
+                    )}
                     </Box>
                   </Box>
                 </Grid>
@@ -2928,109 +3390,237 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                 Power Analysis Radar
               </Typography>
               
-              <Box sx={{
-                p: 4,
-                borderRadius: '12px',
-                bgcolor: 'rgba(10, 14, 23, 0.4)',
-                border: '1px solid rgba(0, 240, 255, 0.15)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
-                  opacity: 0.5,
-                }
-              }}>
-                <Box sx={{ 
-                  height: 400, 
-                  width: '100%', 
-                  position: 'relative',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <ResponsiveContainer>
-                    <RadarChart data={preparePowerRadarData()} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
-                      <PolarGrid 
-                        stroke="rgba(0, 240, 255, 0.1)"
-                        gridType="circle"
-                      />
-                      <PolarAngleAxis 
-                        dataKey="subject" 
-                        tick={{ 
-                          fill: '#fff',
-                          fontSize: 12,
-                          fontWeight: 500,
-                        }}
-                        stroke="rgba(0, 240, 255, 0.2)"
-                      />
-                      <PolarRadiusAxis 
-                        angle={90} 
-                        domain={[0, 100]}
-                        tick={{ 
-                          fill: 'rgba(255, 255, 255, 0.5)',
-                          fontSize: 10 
-                        }}
-                        stroke="rgba(0, 240, 255, 0.1)"
-                      />
-                      {/* Weight Class Average Radar */}
-                      <Radar
-                        name="Weight Class Average"
-                        dataKey="weightClassValue"
-                        stroke="#FF3864"
-                        fill="#FF3864"
-                        fillOpacity={0.15}
-                      />
-                      {/* Fighter Stats Radar */}
-                      <Radar
-                        name="Fighter Stats"
-                        dataKey="value"
-                        stroke="#00F0FF"
-                        fill="#00F0FF"
-                        fillOpacity={0.3}
-                      />
-                      <RechartsTooltip content={<CustomTooltip />} />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                  
-                  {/* Legend */}
-                  <Box 
-                    sx={{ 
-                      position: 'absolute',
-                      bottom: 10,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
+              <Grid container spacing={3}>
+                {/* Power Rating Display */}
+                <Grid item xs={12} md={4}>
+                  <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                    minHeight: 200,
+                  }}>
+                    <Typography sx={{
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      mb: 2,
+                      textAlign: 'center',
+                    }}>
+                      Power Rating
+                    </Typography>
+                    
+                    {/* Rating Circle */}
+                    <Box sx={{
+                      position: 'relative',
                       display: 'flex',
-                      gap: 3,
-                      bgcolor: 'rgba(10, 14, 23, 0.9)',
-                      p: 1,
-                      borderRadius: '6px',
-                      border: '1px solid rgba(0, 240, 255, 0.2)',
-                      backdropFilter: 'blur(5px)',
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box sx={{ 
-                        width: 12, 
-                        height: 12, 
-                        bgcolor: '#00F0FF',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 140,
+                      height: 140,
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, rgba(10, 14, 23, 0.8) 0%, rgba(20, 30, 50, 0.6) 100%)',
+                      border: '2px solid rgba(0, 240, 255, 0.2)',
+                      boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.3), 0 0 30px rgba(0, 240, 255, 0.1)',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: '120px',
+                        height: '120px',
                         borderRadius: '50%',
-                        boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
-                      }} />
-                      <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
+                        background: 'conic-gradient(from 0deg, #00F0FF 0deg, #00F0FF ' + (powerRating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) ' + (powerRating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) 360deg)',
+                        zIndex: 1,
+                      },
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: '100px',
+                        height: '100px',
+                        borderRadius: '50%',
+                        background: 'rgba(10, 14, 23, 0.95)',
+                        border: '1px solid rgba(0, 240, 255, 0.15)',
+                        zIndex: 2,
+                      }
+                    }}>
+                      {/* Rating Text */}
+                      <Box sx={{
+                        position: 'relative',
+                        zIndex: 3,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                        <Typography
+                          sx={{
+                            fontSize: '2.2rem',
+                            fontWeight: 800,
+                            color: '#00F0FF',
+                            fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                            letterSpacing: '0.1em',
+                            lineHeight: 1,
+                            textShadow: '0 0 15px rgba(0, 240, 255, 0.5)',
+                          }}
+                        >
+                          {powerRating.toFixed(0)}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.15em',
+                            marginTop: '-2px',
+                            fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                          }}
+                        >
+                          Rating
+                        </Typography>
+                      </Box>
                     </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box sx={{ width: 12, height: 12, bgcolor: '#FF3864', borderRadius: '50%', opacity: 0.8 }} />
-                      <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>Weight Class Avg</Typography>
+                    
+                    {/* Subtle glow effect */}
+                    <Box sx={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '160px',
+                      height: '160px',
+                      borderRadius: '50%',
+                      background: 'radial-gradient(circle, rgba(0, 240, 255, 0.1) 0%, transparent 70%)',
+                      zIndex: 0,
+                    }} />
+                  </Box>
+                </Grid>
+
+                {/* Radar Chart */}
+                <Grid item xs={12} md={8}>
+                  <Box sx={{
+                    p: 4,
+                    borderRadius: '12px',
+                    bgcolor: 'rgba(10, 14, 23, 0.4)',
+                    border: '1px solid rgba(0, 240, 255, 0.15)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: '1px',
+                      background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+                      opacity: 0.5,
+                    }
+                  }}>
+                    <Box sx={{ 
+                      height: 400, 
+                      width: '100%', 
+                      position: 'relative',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <ResponsiveContainer>
+                        <RadarChart data={preparePowerRadarData()} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+                          <PolarGrid 
+                            stroke="rgba(0, 240, 255, 0.1)"
+                            gridType="circle"
+                          />
+                          <PolarAngleAxis 
+                            dataKey="subject" 
+                            tick={{ 
+                              fill: '#fff',
+                              fontSize: 12,
+                              fontWeight: 500,
+                            }}
+                            stroke="rgba(0, 240, 255, 0.2)"
+                          />
+                          <PolarRadiusAxis 
+                            angle={90} 
+                            domain={[0, 100]}
+                            tick={{ 
+                              fill: 'rgba(255, 255, 255, 0.5)',
+                              fontSize: 10 
+                            }}
+                            stroke="rgba(0, 240, 255, 0.1)"
+                          />
+                          {/* Weight Class Average Radar */}
+                          <Radar
+                            name="Weight Class Average"
+                            dataKey="weightClassValue"
+                            stroke="#FF3864"
+                            fill="#FF3864"
+                            fillOpacity={0.15}
+                          />
+                          {/* Fighter Stats Radar */}
+                          <Radar
+                            name="Fighter Stats"
+                            dataKey="value"
+                            stroke="#00F0FF"
+                            fill="#00F0FF"
+                            fillOpacity={0.3}
+                          />
+                          <RechartsTooltip content={<CustomTooltip />} />
+                        </RadarChart>
+                      </ResponsiveContainer>
+                      
+                      {/* Legend */}
+                      <Box 
+                        sx={{ 
+                          position: 'absolute',
+                          bottom: 10,
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          display: 'flex',
+                          gap: 3,
+                          bgcolor: 'rgba(10, 14, 23, 0.9)',
+                          p: 1,
+                          borderRadius: '6px',
+                          border: '1px solid rgba(0, 240, 255, 0.2)',
+                          backdropFilter: 'blur(5px)',
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box sx={{ 
+                            width: 12, 
+                            height: 12, 
+                            bgcolor: '#00F0FF',
+                            borderRadius: '50%',
+                            boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                          }} />
+                          <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box sx={{ width: 12, height: 12, bgcolor: '#FF3864', borderRadius: '50%', opacity: 0.8 }} />
+                          <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>Weight Class Avg</Typography>
+                        </Box>
+                      </Box>
                     </Box>
                   </Box>
-                </Box>
-              </Box>
+                </Grid>
+
+                {/* Rating Description */}
+                <Grid item xs={12}>
+                  <Typography sx={{
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    fontSize: '0.95rem',
+                    lineHeight: 1.6,
+                    textAlign: 'center',
+                  }}>
+                    Comprehensive power rating based on heavy-hitting strikes, knockout ability, and finishing power compared to weight class averages. Shows your overall striking power and knockout potential.
+                  </Typography>
+                </Grid>
+              </Grid>
             </Box>
                </Box>
              </Collapse>
@@ -3905,98 +4495,226 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                    Defense Strike Types Analysis
                  </Typography>
                  
-                 <Box sx={{
-                   p: 3,
-                   borderRadius: '12px',
-                   background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.05) 0%, rgba(0, 102, 255, 0.02) 100%)',
-                   border: '1px solid rgba(0, 240, 255, 0.15)',
-                   backdropFilter: 'blur(10px)',
-                 }}>
-                   <Box sx={{ 
-                     height: 400, 
-                     width: '100%', 
-                     position: 'relative',
+               <Grid container spacing={3}>
+                 {/* Defense Rating Display */}
+                 <Grid item xs={12} md={4}>
+                   <Box sx={{
                      display: 'flex',
+                     flexDirection: 'column',
                      alignItems: 'center',
-                     justifyContent: 'center'
+                     justifyContent: 'center',
+                     height: '100%',
+                     minHeight: 200,
                    }}>
-                     <ResponsiveContainer>
-                       <RadarChart data={prepareDefenseStrikeTypesRadarData()} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
-                         <PolarGrid 
-                           stroke="rgba(0, 240, 255, 0.1)"
-                           gridType="circle"
-                         />
-                         <PolarAngleAxis 
-                           dataKey="subject" 
-                           tick={{ 
-                             fill: '#fff',
-                             fontSize: 12,
-                             fontWeight: 500,
-                           }}
-                           stroke="rgba(0, 240, 255, 0.2)"
-                         />
-                         <PolarRadiusAxis 
-                           angle={90} 
-                           domain={[0, 100]}
-                           tick={{ 
-                             fill: 'rgba(255, 255, 255, 0.5)',
-                             fontSize: 10 
-                           }}
-                           stroke="rgba(0, 240, 255, 0.1)"
-                         />
-                         {/* Weight Class Average Radar */}
-                         <Radar
-                           name="Weight Class Average"
-                           dataKey="weightClassValue"
-                           stroke="#FF3864"
-                           fill="#FF3864"
-                           fillOpacity={0.15}
-                         />
-                         {/* Fighter Stats Radar */}
-                         <Radar
-                           name="Fighter Stats"
-                           dataKey="value"
-                           stroke="#00F0FF"
-                           fill="#00F0FF"
-                           fillOpacity={0.3}
-                         />
-                         <RechartsTooltip content={<CustomTooltip />} />
-                       </RadarChart>
-                     </ResponsiveContainer>
+                     <Typography sx={{
+                       color: 'rgba(255, 255, 255, 0.8)',
+                       fontSize: '1rem',
+                       fontWeight: 600,
+                       mb: 2,
+                       textAlign: 'center',
+                     }}>
+                       Defense Rating
+                     </Typography>
                      
-                     {/* Legend */}
-                     <Box 
-                       sx={{ 
+                     {/* Rating Circle */}
+                     <Box sx={{
+                       position: 'relative',
+                       display: 'flex',
+                       alignItems: 'center',
+                       justifyContent: 'center',
+                       width: 140,
+                       height: 140,
+                       borderRadius: '50%',
+                       background: 'linear-gradient(135deg, rgba(10, 14, 23, 0.8) 0%, rgba(20, 30, 50, 0.6) 100%)',
+                       border: '2px solid rgba(0, 240, 255, 0.2)',
+                       boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.3), 0 0 30px rgba(0, 240, 255, 0.1)',
+                       '&::before': {
+                         content: '""',
                          position: 'absolute',
-                         bottom: 10,
+                         top: '50%',
                          left: '50%',
-                         transform: 'translateX(-50%)',
+                         transform: 'translate(-50%, -50%)',
+                         width: '120px',
+                         height: '120px',
+                         borderRadius: '50%',
+                         background: 'conic-gradient(from 0deg, #00F0FF 0deg, #00F0FF ' + (defenseRating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) ' + (defenseRating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) 360deg)',
+                         zIndex: 1,
+                       },
+                       '&::after': {
+                         content: '""',
+                         position: 'absolute',
+                         top: '50%',
+                         left: '50%',
+                         transform: 'translate(-50%, -50%)',
+                         width: '100px',
+                         height: '100px',
+                         borderRadius: '50%',
+                         background: 'rgba(10, 14, 23, 0.95)',
+                         border: '1px solid rgba(0, 240, 255, 0.15)',
+                         zIndex: 2,
+                       }
+                     }}>
+                       {/* Rating Text */}
+                       <Box sx={{
+                         position: 'relative',
+                         zIndex: 3,
                          display: 'flex',
-                         gap: 3,
-                         bgcolor: 'rgba(10, 14, 23, 0.9)',
-                         p: 1,
-                         borderRadius: '6px',
-                         border: '1px solid rgba(0, 240, 255, 0.2)',
-                         backdropFilter: 'blur(5px)',
-                       }}
-                     >
-                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                         <Box sx={{ 
-                           width: 12, 
-                           height: 12, 
-                           bgcolor: '#00F0FF',
-                           borderRadius: '50%',
-                           boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
-                         }} />
-                         <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
+                         flexDirection: 'column',
+                         alignItems: 'center',
+                         justifyContent: 'center',
+                       }}>
+                         <Typography
+                           sx={{
+                             fontSize: '2.2rem',
+                             fontWeight: 800,
+                             color: '#00F0FF',
+                             fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                             letterSpacing: '0.1em',
+                             lineHeight: 1,
+                             textShadow: '0 0 15px rgba(0, 240, 255, 0.5)',
+                           }}
+                         >
+                           {defenseRating.toFixed(0)}
+                         </Typography>
+                         <Typography
+                           sx={{
+                             color: 'rgba(255, 255, 255, 0.7)',
+                             fontSize: '0.75rem',
+                             fontWeight: 600,
+                             textTransform: 'uppercase',
+                             letterSpacing: '0.15em',
+                             marginTop: '-2px',
+                             fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                           }}
+                         >
+                           Rating
+                         </Typography>
                        </Box>
-                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                         <Box sx={{ width: 12, height: 12, bgcolor: '#FF3864', borderRadius: '50%', opacity: 0.8 }} />
-                         <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>Weight Class Avg</Typography>
+                     </Box>
+                     
+                     {/* Subtle glow effect */}
+                     <Box sx={{
+                       position: 'absolute',
+                       top: '50%',
+                       left: '50%',
+                       transform: 'translate(-50%, -50%)',
+                       width: '160px',
+                       height: '160px',
+                       borderRadius: '50%',
+                       background: 'radial-gradient(circle, rgba(0, 240, 255, 0.1) 0%, transparent 70%)',
+                       zIndex: 0,
+                     }} />
+                   </Box>
+                 </Grid>
+
+                 {/* Radar Chart */}
+                 <Grid item xs={12} md={8}>
+                   <Box sx={{
+                     p: 3,
+                     borderRadius: '12px',
+                     background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.05) 0%, rgba(0, 102, 255, 0.02) 100%)',
+                     border: '1px solid rgba(0, 240, 255, 0.15)',
+                     backdropFilter: 'blur(10px)',
+                   }}>
+                     <Box sx={{ 
+                       height: 400, 
+                       width: '100%', 
+                       position: 'relative',
+                       display: 'flex',
+                       alignItems: 'center',
+                       justifyContent: 'center'
+                     }}>
+                       <ResponsiveContainer>
+                         <RadarChart data={prepareDefenseStrikeTypesRadarData()} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+                           <PolarGrid 
+                             stroke="rgba(0, 240, 255, 0.1)"
+                             gridType="circle"
+                           />
+                           <PolarAngleAxis 
+                             dataKey="subject" 
+                             tick={{ 
+                               fill: '#fff',
+                               fontSize: 12,
+                               fontWeight: 500,
+                             }}
+                             stroke="rgba(0, 240, 255, 0.2)"
+                           />
+                           <PolarRadiusAxis 
+                             angle={90} 
+                             domain={[0, 100]}
+                             tick={{ 
+                               fill: 'rgba(255, 255, 255, 0.5)',
+                               fontSize: 10 
+                             }}
+                             stroke="rgba(0, 240, 255, 0.1)"
+                           />
+                           {/* Weight Class Average Radar */}
+                           <Radar
+                             name="Weight Class Average"
+                             dataKey="weightClassValue"
+                             stroke="#FF3864"
+                             fill="#FF3864"
+                             fillOpacity={0.15}
+                           />
+                           {/* Fighter Stats Radar */}
+                           <Radar
+                             name="Fighter Stats"
+                             dataKey="value"
+                             stroke="#00F0FF"
+                             fill="#00F0FF"
+                             fillOpacity={0.3}
+                           />
+                           <RechartsTooltip content={<CustomTooltip />} />
+                         </RadarChart>
+                       </ResponsiveContainer>
+                       
+                       {/* Legend */}
+                       <Box 
+                         sx={{ 
+                           position: 'absolute',
+                           bottom: 10,
+                           left: '50%',
+                           transform: 'translateX(-50%)',
+                           display: 'flex',
+                           gap: 3,
+                           bgcolor: 'rgba(10, 14, 23, 0.9)',
+                           p: 1,
+                           borderRadius: '6px',
+                           border: '1px solid rgba(0, 240, 255, 0.2)',
+                           backdropFilter: 'blur(5px)',
+                         }}
+                       >
+                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                           <Box sx={{ 
+                             width: 12, 
+                             height: 12, 
+                             bgcolor: '#00F0FF',
+                             borderRadius: '50%',
+                             boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                           }} />
+                           <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
+                         </Box>
+                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                           <Box sx={{ width: 12, height: 12, bgcolor: '#FF3864', borderRadius: '50%', opacity: 0.8 }} />
+                           <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>Weight Class Avg</Typography>
+                         </Box>
                        </Box>
                      </Box>
                    </Box>
-                 </Box>
+                 </Grid>
+
+                 {/* Rating Description */}
+                 <Grid item xs={12}>
+                   <Typography sx={{
+                     color: 'rgba(255, 255, 255, 0.8)',
+                     fontSize: '0.95rem',
+                     lineHeight: 1.6,
+                     textAlign: 'center',
+                   }}>
+                     Comprehensive defense rating based on strike absorption rates across all techniques compared to weight class averages. Shows your overall defensive effectiveness and vulnerability to different strike types.
+                   </Typography>
+                 </Grid>
+               </Grid>
                </Box>
               
                  </Box>

@@ -11,8 +11,17 @@ interface TopTakedown {
   description: string;
 }
 
+interface TakedownVulnerability {
+  name: string;
+  timesTakenDown: number;
+  timesPerRound: number;
+  timesPerMinute: number;
+  description: string;
+}
+
 interface GrapplingInfoData {
   topTakedowns: TopTakedown[];
+  topTakedownVulnerabilities: TakedownVulnerability[];
   totalTakedownAttempts: number;
   totalTakedownSuccess: number;
   overallTakedownSuccessRate: number;
@@ -97,6 +106,74 @@ export const useGrapplingInfo = (fighter: Fighter): GrapplingInfoData => {
     return processedTakedowns;
   }, [fighter]);
 
+  const calculateTakedownVulnerabilities = React.useCallback((): TakedownVulnerability[] => {
+    const stats = fighter.defensive_stats;
+    if (!stats) return [];
+
+    // Define all available takedown vulnerability types with their corresponding fields
+    const vulnerabilityTypes = [
+      {
+        name: 'Single Leg',
+        timesTakenDown: stats.TimesSingleLegged || 0,
+        description: 'Vulnerable to single leg takedowns, often indicates poor sprawl defense'
+      },
+      {
+        name: 'Double Leg',
+        timesTakenDown: stats.TimesDoubleLegged || 0,
+        description: 'Vulnerable to double leg takedowns, suggests weak takedown defense'
+      },
+      {
+        name: 'Body Lock',
+        timesTakenDown: stats.TimesBodyLocked || 0,
+        description: 'Vulnerable to body lock takedowns, indicates poor clinch defense'
+      },
+      {
+        name: 'Ankle Pick',
+        timesTakenDown: stats.TimesAnklePicked || 0,
+        description: 'Vulnerable to ankle pick takedowns, suggests poor footwork'
+      },
+      {
+        name: 'Throw',
+        timesTakenDown: stats.TimesThrown || 0,
+        description: 'Vulnerable to judo-style throws, indicates poor balance or grip fighting'
+      },
+      {
+        name: 'Trip',
+        timesTakenDown: stats.TimesTripped || 0,
+        description: 'Vulnerable to trip takedowns, suggests poor base and balance'
+      },
+      {
+        name: 'Imanari Roll',
+        timesTakenDown: stats.TimesImanaried || 0,
+        description: 'Vulnerable to leg lock entries, indicates poor leg defense'
+      }
+    ];
+
+    // Calculate per-round and per-minute stats
+    const roundsTracked = fighter.RoundsTracked || 1;
+    const minutesTracked = fighter.MinutesTracked || 1;
+
+    // Process each vulnerability type
+    const processedVulnerabilities = vulnerabilityTypes
+      .map(vulnerability => {
+        const timesPerRound = vulnerability.timesTakenDown / roundsTracked;
+        const timesPerMinute = vulnerability.timesTakenDown / minutesTracked;
+
+        return {
+          name: vulnerability.name,
+          timesTakenDown: vulnerability.timesTakenDown,
+          timesPerRound,
+          timesPerMinute,
+          description: vulnerability.description
+        };
+      })
+      .filter(vulnerability => vulnerability.timesTakenDown > 0) // Only include vulnerabilities that occurred
+      .sort((a, b) => b.timesTakenDown - a.timesTakenDown) // Sort by times taken down (most vulnerable first)
+      .slice(0, 3); // Get top 3
+
+    return processedVulnerabilities;
+  }, [fighter]);
+
   const calculateOverallStats = React.useCallback(() => {
     const stats = fighter.takedown_stats;
     if (!stats) return { totalAttempts: 0, totalSuccess: 0, successRate: 0 };
@@ -125,10 +202,12 @@ export const useGrapplingInfo = (fighter: Fighter): GrapplingInfoData => {
   }, [fighter]);
 
   const topTakedowns = calculateTopTakedowns();
+  const topTakedownVulnerabilities = calculateTakedownVulnerabilities();
   const { totalAttempts, totalSuccess, successRate } = calculateOverallStats();
 
   return {
     topTakedowns,
+    topTakedownVulnerabilities,
     totalTakedownAttempts: totalAttempts,
     totalTakedownSuccess: totalSuccess,
     overallTakedownSuccessRate: successRate
