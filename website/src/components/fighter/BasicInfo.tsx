@@ -3,6 +3,10 @@ import { Paper, Typography, Grid, Box, CircularProgress, Tooltip } from '@mui/ma
 import { Fighter } from '../../types/firestore';
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { useBasicInfo } from '../../hooks/stats/useBasicInfo';
+import { useFighterFights } from '../../hooks/useFights';
+import { useFightersByIds } from '../../hooks/useFighters';
+import { useFighterCombinedDifficultyScore } from '../../hooks/useDifficultyScore';
+import LoadingScreen from '../common/LoadingScreen';
 
 interface BasicInfoProps {
   fighter: Fighter;
@@ -41,6 +45,58 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
   const strikesPerMinute = calculateStrikesPerMinute();
   const weightClassStrikesPerMinute = calculateWeightClassStrikesPerMinute();
   const overallRating = calculateOverallRating();
+
+  // Get fighter's fights and opponents for resume rating calculation
+  const { fights, loading: fightsLoading } = useFighterFights(fighter.fighterCode);
+  
+  // Get unique opponent codes from fights
+  const opponentCodes = React.useMemo(() => {
+    if (!fights) return [];
+    const opponentSet = new Set(fights.map(fight => 
+      fight.fighterA === fighter.fighterCode ? fight.fighterB : fight.fighterA
+    ));
+    return Array.from(opponentSet);
+  }, [fights, fighter.fighterCode]);
+
+  // Fetch all opponent data
+  const { fighters: opponents, loading: opponentsLoading } = useFightersByIds(opponentCodes);
+
+  // Calculate combined difficulty score for the fighter (resume rating)
+  const resumeRating = useFighterCombinedDifficultyScore({
+    fights,
+    opponents,
+    fighterCode: fighter.fighterCode,
+    weightClassData: weightClassAvgData
+  });
+
+  // Calculate adjusted rating that combines overall (80%) and resume (20%)
+  const adjustedRating = React.useMemo(() => {
+    if (fightsLoading || opponentsLoading || !resumeRating.averageScore) {
+      return {
+        ...overallRating,
+        originalRating: overallRating.rating,
+        resumeContribution: 0
+      };
+    }
+    
+    const overallWeight = 0.8;
+    const resumeWeight = 0.2;
+    
+    const adjustedScore = Math.round(
+      (overallRating.rating * overallWeight) + 
+      (resumeRating.averageScore * resumeWeight)
+    );
+    
+    return {
+      ...overallRating,
+      rating: adjustedScore,
+      originalRating: overallRating.rating,
+      resumeContribution: resumeRating.averageScore
+    };
+  }, [overallRating, resumeRating.averageScore, fightsLoading, opponentsLoading]);
+
+  // Determine if we're still loading
+  const isLoading = fightsLoading || opponentsLoading || !resumeRating.averageScore;
 
   // Enhanced Rating Card Stylesheet (matching Strike Distribution Analysis)
   const ratingCardStyles = {
@@ -489,8 +545,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
                 <Radar
                   name="Fighter Stats"
                   dataKey="value"
-                  stroke="#00F0FF"
-                  fill="#00F0FF"
+                  stroke="#8B5CF6"
+                  fill="#8B5CF6"
                   fillOpacity={0.3}
                 />
                 <RechartsTooltip content={<CustomTooltip />} />
@@ -501,9 +557,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
             <Box 
               sx={{ 
                 position: 'absolute',
-                bottom: 10,
-                left: '50%',
-                transform: 'translateX(-50%)',
+                top: 10,
+                right: 10,
                 display: 'flex',
                 gap: 3,
                 bgcolor: 'rgba(10, 14, 23, 0.9)',
@@ -517,9 +572,9 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
                 <Box sx={{ 
                   width: 12, 
                   height: 12, 
-                  bgcolor: '#00F0FF',
+                  bgcolor: '#8B5CF6',
                   borderRadius: '50%',
-                  boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                  boxShadow: '0 0 10px rgba(139, 92, 246, 0.5)',
                 }} />
                 <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>Fighter</Typography>
               </Box>
@@ -1030,6 +1085,40 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
     </Grid>
   );
 
+  // Show loading screen while data is being fetched
+  if (isLoading) {
+    return (
+      <Paper 
+        elevation={0} 
+        sx={{ 
+          p: { xs: 2, sm: 3, md: 4 },
+          mb: 3,
+          bgcolor: 'transparent',
+          borderRadius: '12px',
+          position: 'relative',
+          overflow: 'hidden',
+          border: '1px solid rgba(0, 240, 255, 0.1)',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '3px',
+            background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+          }
+        }}
+      >
+        <LoadingScreen 
+          message="Calculating fighter analytics..." 
+          size="large"
+          showLogo={true}
+          fullScreen={false}
+        />
+      </Paper>
+    );
+  }
+
   return (
     <Paper 
       elevation={0} 
@@ -1168,7 +1257,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
             </Box>
 
             <Grid container spacing={4} alignItems="center">
-              {/* Main Rating Display */}
+              {/* Overall Rating Display */}
               <Grid item xs={12} md={4}>
                 <Box sx={{ textAlign: 'center', position: 'relative' }}>
                   {/* Modern Minimalistic Rating Display */}
@@ -1192,7 +1281,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
                       width: '120px',
                       height: '120px',
                       borderRadius: '50%',
-                      background: 'conic-gradient(from 0deg, #00F0FF 0deg, #00F0FF ' + (overallRating.rating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) ' + (overallRating.rating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) 360deg)',
+                      background: 'conic-gradient(from 0deg, #00F0FF 0deg, #00F0FF ' + (adjustedRating.rating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) ' + (adjustedRating.rating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) 360deg)',
                       zIndex: 1,
                     },
                     '&::after': {
@@ -1229,7 +1318,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
                           textShadow: '0 0 15px rgba(0, 240, 255, 0.5)',
                         }}
                       >
-                        {overallRating.rating}
+                        {adjustedRating.rating}
                       </Typography>
                       <Typography
                         sx={{
@@ -1242,8 +1331,9 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
                           fontFamily: '"Orbitron", "Roboto Mono", monospace',
                         }}
                       >
-                        Rating
+                        Overall
                       </Typography>
+
                     </Box>
                   </Box>
                   
@@ -1263,6 +1353,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
                 </Box>
               </Grid>
 
+
+
               {/* Metrics and Analysis */}
               <Grid item xs={12} md={8}>
                 {/* Archetype */}
@@ -1277,7 +1369,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
                     mb: 2,
                   }}
                 >
-                  {overallRating.archetype}
+                  {adjustedRating.archetype}
                 </Typography>
                 
                 {/* Description */}
@@ -1285,8 +1377,9 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
                   ...ratingCardStyles.description,
                   mb: 3,
                 }}>
-                  Comprehensive fighter rating based on all performance metrics compared to weight class averages
+                  Overall Rating: Comprehensive fighter rating (80% performance metrics + 20% resume strength) compared to weight class averages
                 </Typography>
+
                 
                 {/* Strengths */}
                 <Box sx={{
@@ -1307,7 +1400,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
                     Key Strengths
                   </Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
-                    {overallRating.strengths.map((strength, index) => (
+                    {adjustedRating.strengths.map((strength, index) => (
                       <Box
                         key={index}
                         sx={{
@@ -1337,6 +1430,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
                     ))}
                   </Box>
                 </Box>
+
+
               </Grid>
             </Grid>
           </Box>

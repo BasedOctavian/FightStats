@@ -1,7 +1,7 @@
 import React from 'react';
 import { Paper, Typography, Grid, Box, Collapse, IconButton } from '@mui/material';
 import { ExpandMore, ExpandLess } from '@mui/icons-material';
-import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
+import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip as RechartsTooltip, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, ZAxis } from 'recharts';
 import { Fighter } from '../../types/firestore';
 import { useBasicInfo } from '../../hooks/stats/useBasicInfo';
 import { useGrapplingInfo } from '../../hooks/stats/useGrapplingInfo';
@@ -737,6 +737,73 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
     },
   };
 
+  // Prepare bubble chart data for takedown analysis
+  const prepareTakedownBubbleData = React.useMemo(() => {
+    // Get takedown data from the fighter
+    const takedownStats = fighter.takedown_stats || {};
+    
+    // Define takedown categories with their data
+    const takedownCategories = [
+      {
+        name: 'Single Leg',
+        attempts: takedownStats.SingleLegTakedownAttempts || 0,
+        success: takedownStats.SingleLegTakedownSuccess || 0,
+      },
+      {
+        name: 'Double Leg',
+        attempts: takedownStats.DoubleLegTakedownAttempts || 0,
+        success: takedownStats.DoubleLegTakedownSuccess || 0,
+      },
+      {
+        name: 'Body Lock',
+        attempts: takedownStats.BodyLockTakedownAttempts || 0,
+        success: takedownStats.BodyLockTakedownSuccess || 0,
+      },
+      {
+        name: 'Trip',
+        attempts: takedownStats.TripTakedownAttempts || 0,
+        success: takedownStats.TripTakedownSuccess || 0,
+      },
+      {
+        name: 'Ankle Pick',
+        attempts: takedownStats.AttemptedAnklePickTD || 0,
+        success: takedownStats.SuccessfulAnklePickTD || 0,
+      },
+      {
+        name: 'Imanari',
+        attempts: takedownStats.AttemptedImanariTD || 0,
+        success: takedownStats.SuccessfulImanariTD || 0,
+      },
+      {
+        name: 'Throw',
+        attempts: takedownStats.AttemptedThrowTD || 0,
+        success: takedownStats.SuccessfulThrowTD || 0,
+      }
+    ];
+
+    // Calculate total takedown attempts across all categories
+    const totalTakedownAttempts = takedownCategories.reduce((sum, category) => {
+      return sum + category.attempts;
+    }, 0);
+
+    // Transform data for bubble chart
+    return takedownCategories
+      .filter(category => category.attempts > 0)
+      .map(category => {
+        const successRate = category.attempts > 0 ? (category.success / category.attempts) * 100 : 0;
+        const usagePercent = totalTakedownAttempts > 0 ? (category.attempts / totalTakedownAttempts) * 100 : 0;
+        
+        return {
+          takedownType: category.name,
+          successRate: Math.round(successRate * 10) / 10, // Round to 1 decimal
+          usagePercent: Math.round(usagePercent * 10) / 10, // Round to 1 decimal
+          attempts: category.attempts,
+          success: category.success
+        };
+      })
+      .sort((a, b) => b.usagePercent - a.usagePercent); // Sort by usage percentage descending
+  }, [fighter]);
+
   return (
     <Paper 
       elevation={0} 
@@ -1056,8 +1123,8 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                       <Radar
                         name="Fighter Stats"
                         dataKey="value"
-                        stroke="#00F0FF"
-                        fill="#00F0FF"
+                        stroke="#8B5CF6"
+                        fill="#8B5CF6"
                         fillOpacity={0.3}
                       />
                       <RechartsTooltip content={<CustomTooltip />} />
@@ -1455,6 +1522,153 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                         </Typography>
                       </Box>
                     )}
+
+                    {/* Takedown Bubble Chart */}
+                    <Box sx={{ mt: 4 }}>
+                      <Typography sx={{
+                        color: '#FFFFFF',
+                        fontWeight: 600,
+                        fontSize: '1.1rem',
+                        mb: 3,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        textAlign: 'center',
+                        position: 'relative',
+                        '&::after': {
+                          content: '""',
+                          position: 'absolute',
+                          bottom: -8,
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          width: '60px',
+                          height: '2px',
+                          background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+                        }
+                      }}>
+                        Takedown Selection Bubble Analysis
+                      </Typography>
+                      
+                      <Box sx={{
+                        p: 3,
+                        borderRadius: '12px',
+                        bgcolor: 'rgba(10, 14, 23, 0.4)',
+                        border: '1px solid rgba(0, 240, 255, 0.15)',
+                        height: '500px',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          bgcolor: 'rgba(10, 14, 23, 0.6)',
+                          border: '1px solid rgba(0, 240, 255, 0.3)',
+                        },
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: '1px',
+                          background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+                          opacity: 0.5,
+                        }
+                      }}>
+                        {prepareTakedownBubbleData.length > 0 ? (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <ScatterChart
+                              margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                              data={prepareTakedownBubbleData}
+                            >
+                              <CartesianGrid 
+                                strokeDasharray="3 3" 
+                                stroke="rgba(0, 240, 255, 0.1)"
+                              />
+                              <XAxis 
+                                type="category" 
+                                dataKey="takedownType" 
+                                name="Takedown Type"
+                                tick={{ fill: '#FFFFFF', fontSize: 12 }}
+                                axisLine={{ stroke: 'rgba(0, 240, 255, 0.3)' }}
+                                tickLine={{ stroke: 'rgba(0, 240, 255, 0.3)' }}
+                              />
+                              <YAxis 
+                                type="number" 
+                                dataKey="successRate" 
+                                name="Success Rate"
+                                domain={[0, 100]}
+                                tick={{ fill: '#FFFFFF', fontSize: 12 }}
+                                axisLine={{ stroke: 'rgba(0, 240, 255, 0.3)' }}
+                                tickLine={{ stroke: 'rgba(0, 240, 255, 0.3)' }}
+                                label={{ 
+                                  value: 'Success Rate (%)', 
+                                  angle: -90, 
+                                  position: 'insideLeft',
+                                  style: { textAnchor: 'middle', fill: '#FFFFFF', fontSize: 12 }
+                                }}
+                              />
+                              <ZAxis 
+                                type="number" 
+                                dataKey="usagePercent" 
+                                range={[80, 600]}
+                                name="Usage Percentage"
+                              />
+                              <RechartsTooltip
+                                content={({ active, payload }) => {
+                                  if (active && payload && payload.length) {
+                                    const data = payload[0].payload;
+                                    return (
+                                      <Box
+                                        sx={{
+                                          bgcolor: 'rgba(10, 14, 23, 0.95)',
+                                          border: '1px solid rgba(0, 240, 255, 0.3)',
+                                          p: 2,
+                                          borderRadius: '6px',
+                                          backdropFilter: 'blur(10px)',
+                                          maxWidth: 280,
+                                          boxShadow: '0 4px 12px rgba(0, 240, 255, 0.1)',
+                                        }}
+                                      >
+                                        <Typography sx={{ color: '#00F0FF', fontWeight: 600, mb: 1 }}>
+                                          {data.takedownType}
+                                        </Typography>
+                                        <Typography sx={{ color: '#fff', fontSize: '0.9rem', mb: 1 }}>
+                                          Success Rate: {data.successRate}%
+                                        </Typography>
+                                        <Typography sx={{ color: '#fff', fontSize: '0.9rem', mb: 1 }}>
+                                          Usage: {data.usagePercent}%
+                                        </Typography>
+                                      </Box>
+                                    );
+                                  }
+                                  return null;
+                                }}
+                              />
+                              <Scatter 
+                                dataKey="usagePercent" 
+                                fill="rgba(0, 240, 255, 0.8)"
+                                stroke="rgba(0, 240, 255, 1)"
+                                strokeWidth={2}
+                              />
+                            </ScatterChart>
+                          </ResponsiveContainer>
+                        ) : (
+                          <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            height: '100%',
+                            textAlign: 'center',
+                          }}>
+                            <Typography sx={{
+                              color: 'rgba(255, 255, 255, 0.6)',
+                              fontSize: '0.9rem',
+                              fontStyle: 'italic',
+                            }}>
+                              No takedown data available
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                    </Box>
                   </Grid>
                 </Grid>
               </Box>
@@ -2529,8 +2743,8 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                         <Radar
                           name="Fighter Stats"
                           dataKey="value"
-                          stroke="#00F0FF"
-                          fill="#00F0FF"
+                          stroke="#8B5CF6"
+                          fill="#8B5CF6"
                           fillOpacity={0.3}
                         />
                         <RechartsTooltip content={<CustomTooltip />} />
@@ -2541,9 +2755,8 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                     <Box 
                       sx={{ 
                         position: 'absolute',
-                        bottom: 10,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
+                        top: 10,
+                        right: 10,
                         display: 'flex',
                         gap: 3,
                         bgcolor: 'rgba(10, 14, 23, 0.9)',
@@ -2557,9 +2770,9 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                         <Box sx={{ 
                           width: 12, 
                           height: 12, 
-                          bgcolor: '#00F0FF',
+                          bgcolor: '#8B5CF6',
                           borderRadius: '50%',
-                          boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                          boxShadow: '0 0 10px rgba(139, 92, 246, 0.5)',
                         }} />
                         <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
                       </Box>
@@ -3175,8 +3388,8 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                         <Radar
                           name="Fighter Stats"
                           dataKey="value"
-                          stroke="#00F0FF"
-                          fill="#00F0FF"
+                          stroke="#8B5CF6"
+                          fill="#8B5CF6"
                           fillOpacity={0.3}
                         />
                         <RechartsTooltip content={<CustomTooltip />} />
@@ -3187,9 +3400,8 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                     <Box 
                       sx={{ 
                         position: 'absolute',
-                        bottom: 10,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
+                        top: 10,
+                        right: 10,
                         display: 'flex',
                         gap: 3,
                         bgcolor: 'rgba(10, 14, 23, 0.9)',
@@ -3203,9 +3415,9 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                         <Box sx={{ 
                           width: 12, 
                           height: 12, 
-                          bgcolor: '#00F0FF',
+                          bgcolor: '#8B5CF6',
                           borderRadius: '50%',
-                          boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                          boxShadow: '0 0 10px rgba(139, 92, 246, 0.5)',
                         }} />
                         <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
                       </Box>

@@ -29,8 +29,10 @@ import {
 import { useFighterFights } from '../../hooks/useFights';
 import { useFightersByIds } from '../../hooks/useFighters';
 import { useEvents } from '../../hooks/useEvents';
-import { useOverallRating } from '../../hooks/stats/useOverallRating';
 import { useWeightClass } from '../../hooks/useWeightClass';
+import { useFightDifficultyScores } from '../../hooks/useFightDifficultyScores';
+import { useFighterCombinedDifficultyScore } from '../../hooks/useDifficultyScore';
+import DifficultyScore from '../DifficultyScore';
 import { Fighter, Event } from '../../types/firestore';
 
 // Enhanced card styles matching GrapplingInfo
@@ -81,143 +83,9 @@ interface FightHistoryProps {
   weightClassAvgData?: any; // Add this prop to receive weight class data from parent
 }
 
-// Method of finish multipliers - defined outside component for reuse
-const methodMultipliers = {
-  'KO': 1.3,    // Knockout - highest difficulty
-  'TKO': 1.2,   // Technical knockout - high difficulty
-  'SUB': 1.1,   // Submission - moderate-high difficulty
-  'DEC': 1.0,   // Decision - base difficulty
-  'DQ': 0.8,    // Disqualification - lower difficulty
-  'NC': 0.5     // No contest - lowest difficulty
-};
 
-// Round efficiency multipliers - defined outside component for reuse
-const roundMultipliers = {
-  1: 1.4,  // First round finish - very impressive
-  2: 1.2,  // Second round finish - impressive
-  3: 1.0,  // Third round finish - standard
-  4: 0.9,  // Fourth round finish - less impressive
-  5: 0.8   // Fifth round finish - least impressive
-};
 
-// Wrapper component that always calls the hook
-const DifficultyScoreWrapper: React.FC<{ 
-  opponent: Fighter; 
-  weightClassData: any;
-  methodOfFinish: string;
-  actualRounds: number;
-}> = ({ opponent, weightClassData, methodOfFinish, actualRounds }) => {
-  const opponentRating = useOverallRating(opponent, weightClassData);
-  
-  // Calculate difficulty score based on opponent rating, finish method, and rounds
-  const calculateDifficultyScore = () => {
-    const baseRating = opponentRating.rating;
-    
-    // Method of finish multiplier
-    const methodMultiplier = methodMultipliers[methodOfFinish as keyof typeof methodMultipliers] || 1.0;
-    
-    // Round efficiency multiplier - finishing early is more impressive
-    const roundMultiplier = roundMultipliers[actualRounds as keyof typeof roundMultipliers] || 1.0;
-    
-    // Calculate final difficulty score
-    const difficultyScore = Math.round(baseRating * methodMultiplier * roundMultiplier);
-    
-    // Ensure score stays within 1-100 range
-    return Math.min(100, Math.max(1, difficultyScore));
-  };
-  
-  const difficultyScore = calculateDifficultyScore();
-  
-  // Get difficulty description
-  const getDifficultyDescription = (score: number) => {
-    if (score >= 85) return 'Extreme';
-    if (score >= 75) return 'Very High';
-    if (score >= 65) return 'High';
-    if (score >= 55) return 'Moderate';
-    if (score >= 45) return 'Low';
-    return 'Very Low';
-  };
-  
-  const difficultyDescription = getDifficultyDescription(difficultyScore);
 
-  return (
-    <Tooltip 
-      title={
-        <Box>
-          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-            {opponent.fighterName || opponent.name}: Difficulty Analysis
-          </Typography>
-          <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>
-            Base Rating: {opponentRating.rating} ({opponentRating.archetype})
-          </Typography>
-          <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>
-            Finish Method: {methodOfFinish} (×{methodMultipliers[methodOfFinish as keyof typeof methodMultipliers] || 1.0})
-          </Typography>
-          <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>
-            Round Efficiency: R{actualRounds} (×{roundMultipliers[actualRounds as keyof typeof roundMultipliers] || 1.0})
-          </Typography>
-          <Typography variant="caption" sx={{ display: 'block', fontWeight: 600 }}>
-            Difficulty Score: {difficultyScore} ({difficultyDescription})
-          </Typography>
-        </Box>
-      }
-      placement="top"
-      arrow
-    >
-      <Box sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: 0.5,
-        bgcolor: 'rgba(0, 240, 255, 0.08)',
-        px: 1.5,
-        py: 0.5,
-        borderRadius: '8px',
-        border: '1px solid rgba(0, 240, 255, 0.2)',
-        transition: 'all 0.3s ease',
-        backdropFilter: 'blur(5px)',
-        '&:hover': {
-          bgcolor: 'rgba(0, 240, 255, 0.12)',
-          border: '1px solid rgba(0, 240, 255, 0.3)',
-          transform: 'translateY(-1px)',
-          boxShadow: '0 4px 12px rgba(0, 240, 255, 0.15)',
-        }
-      }}>
-        <RatingIcon sx={{ 
-          color: '#00F0FF', 
-          fontSize: 16,
-          filter: 'drop-shadow(0 0 4px rgba(0, 240, 255, 0.5))',
-        }} />
-        <Typography sx={{ 
-          color: '#00F0FF',
-          fontSize: '0.85rem',
-          fontWeight: 700,
-          fontFamily: '"Orbitron", "Roboto Mono", monospace',
-          letterSpacing: '0.05em',
-          textShadow: '0 0 8px rgba(0, 240, 255, 0.3)',
-        }}>
-          {difficultyScore}
-        </Typography>
-      </Box>
-    </Tooltip>
-  );
-};
-
-// Separate component to handle difficulty score display
-const DifficultyScore: React.FC<{ 
-  opponentCode: string; 
-  opponents: Fighter[]; 
-  weightClassData: any;
-  methodOfFinish: string;
-  actualRounds: number;
-}> = ({ opponentCode, opponents, weightClassData, methodOfFinish, actualRounds }) => {
-  const opponent = opponents.find(o => o.fighterCode === opponentCode);
-  
-  if (!opponent || !weightClassData) {
-    return null;
-  }
-
-  return <DifficultyScoreWrapper opponent={opponent} weightClassData={weightClassData} methodOfFinish={methodOfFinish} actualRounds={actualRounds} />;
-};
 
 const LoadingCard: React.FC = () => (
   <Box sx={cardStyle}>
@@ -303,45 +171,21 @@ const FightHistory: React.FC<FightHistoryProps> = ({ fighter, weightClassAvgData
     return { nameMap, idMap };
   }, [opponents]);
 
-  // Calculate difficulty scores for all fights using the same logic as DifficultyScoreWrapper
-  const fightsWithScores = useMemo(() => {
-    if (!fights || !opponents.length || !weightClassData) return [];
-    
-    return fights.map(fight => {
-      const opponentCode = fight.fighterA === fighter.fighterCode ? fight.fighterB : fight.fighterA;
-      const opponent = opponents.find(o => o.fighterCode === opponentCode);
-      
-      if (!opponent) {
-        return { ...fight, difficultyScore: 0 };
-      }
-      
-      // Calculate base rating using the same logic as useOverallRating
-      const totalFights = opponent.FightsTracked || 0;
-      const totalWins = opponent.fight_outcome_stats?.FighterWins || 0;
-      const winRate = totalFights > 0 ? (totalWins / totalFights) * 100 : 50;
-      
-      const koWins = opponent.fight_outcome_stats?.FighterKOWins || 0;
-      const tkoWins = opponent.fight_outcome_stats?.FighterTKOWins || 0;
-      const subWins = opponent.fight_outcome_stats?.FighterSUBWin || 0;
-      const totalFinishes = koWins + tkoWins + subWins;
-      const finishRate = totalWins > 0 ? (totalFinishes / totalWins) * 100 : 25;
-      
-      // Calculate base rating similar to useOverallRating (simplified version)
-      const baseRating = Math.min(100, Math.max(1, (winRate * 0.7) + (finishRate * 0.3)));
-      
-      // Apply method and round multipliers (same as DifficultyScoreWrapper)
-      const methodMultiplier = methodMultipliers[fight.methodOfFinish as keyof typeof methodMultipliers] || 1.0;
-      const roundMultiplier = roundMultipliers[fight.actualRounds as keyof typeof roundMultipliers] || 1.0;
-      
-      // Calculate difficulty score (same as DifficultyScoreWrapper)
-      const difficultyScore = Math.round(baseRating * methodMultiplier * roundMultiplier);
-      
-      return {
-        ...fight,
-        difficultyScore: Math.min(100, Math.max(1, difficultyScore))
-      };
-    });
-  }, [fights, opponents, weightClassData, fighter.fighterCode]);
+  // Calculate difficulty scores for all fights using the new hook
+  const fightsWithScores = useFightDifficultyScores({
+    fights,
+    opponents,
+    fighterCode: fighter.fighterCode,
+    weightClassData
+  });
+
+  // Calculate combined difficulty score for the fighter
+  const combinedDifficulty = useFighterCombinedDifficultyScore({
+    fights,
+    opponents,
+    fighterCode: fighter.fighterCode,
+    weightClassData
+  });
 
   // Sort fights by title fights first (sorted by performance), then regular fights (sorted by performance)
   const sortedFights = useMemo(() => {
@@ -451,6 +295,318 @@ const FightHistory: React.FC<FightHistoryProps> = ({ fighter, weightClassAvgData
             )}
           </Typography>
         </Box>
+
+        {/* Overall Difficulty Score Section */}
+        {!isLoading && fights.length > 0 && (
+          <Box sx={{ mb: 4 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column',
+              gap: 5,
+              p: 6,
+              bgcolor: 'rgba(0, 240, 255, 0.04)',
+              borderRadius: '24px',
+              border: '1px solid rgba(0, 240, 255, 0.15)',
+              backdropFilter: 'blur(20px)',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: '0 12px 40px rgba(0, 240, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background: 'linear-gradient(90deg, #00F0FF, #0066FF, #00F0FF, #0066FF, #00F0FF)',
+                opacity: 0.8,
+                animation: 'shimmer 4s ease-in-out infinite',
+              },
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'radial-gradient(circle at 25% 15%, rgba(0, 240, 255, 0.08), transparent 60%), radial-gradient(circle at 75% 85%, rgba(0, 102, 255, 0.05), transparent 60%), radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.02), transparent 80%)',
+                pointerEvents: 'none',
+              }
+            }}>
+              {/* Resume Rating Header with Average */}
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 2,
+                position: 'relative',
+                zIndex: 1,
+                mb: 2,
+              }}>
+                {/* Header */}
+                <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1.5,
+                }}>
+                  <RatingIcon sx={{ 
+                    color: '#00F0FF', 
+                    fontSize: 28,
+                    filter: 'drop-shadow(0 0 12px rgba(0, 240, 255, 0.6))',
+                  }} />
+                  <Typography sx={{ 
+                    color: 'rgba(255, 255, 255, 0.95)',
+                    fontSize: '1.5rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                    textAlign: 'center',
+                    textShadow: '0 0 15px rgba(0, 240, 255, 0.5)',
+                  }}>
+                    Resume Rating
+                  </Typography>
+                </Box>
+                
+                {/* Average Score Display */}
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 2,
+                  bgcolor: 'rgba(0, 240, 255, 0.1)',
+                  px: 5,
+                  py: 2.5,
+                  borderRadius: '20px',
+                  border: '1px solid rgba(0, 240, 255, 0.3)',
+                  transition: 'all 0.4s ease',
+                  backdropFilter: 'blur(15px)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  boxShadow: '0 8px 24px rgba(0, 240, 255, 0.15)',
+                  '&:hover': {
+                    bgcolor: 'rgba(0, 240, 255, 0.15)',
+                    border: '1px solid rgba(0, 240, 255, 0.5)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 12px 32px rgba(0, 240, 255, 0.25)',
+                  },
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '2px',
+                    background: 'linear-gradient(90deg, transparent, #00F0FF, #0066FF, #00F0FF, transparent)',
+                    opacity: 0.8,
+                    animation: 'shimmer 2s ease-in-out infinite',
+                  },
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.1), transparent 70%)',
+                    pointerEvents: 'none',
+                  }
+                }}>
+                  <RatingIcon sx={{ 
+                    color: '#00F0FF', 
+                    fontSize: 32,
+                    filter: 'drop-shadow(0 0 15px rgba(0, 240, 255, 0.8))',
+                  }} />
+                  <Typography sx={{ 
+                    color: '#00F0FF',
+                    fontSize: '2.5rem',
+                    fontWeight: 800,
+                    fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                    letterSpacing: '0.1em',
+                    textShadow: '0 0 25px rgba(0, 240, 255, 0.6)',
+                  }}>
+                    {combinedDifficulty.averageScore.toFixed(1)}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Content Container */}
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: { xs: 'column', lg: 'row' },
+                alignItems: { xs: 'stretch', lg: 'center' },
+                gap: 4,
+                position: 'relative',
+                zIndex: 1,
+              }}>
+
+              {/* Performance Breakdown Grid */}
+              <Box sx={{ 
+                display: 'grid',
+                gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(2, 1fr)' },
+                gap: 4,
+                flex: 1,
+                position: 'relative',
+                zIndex: 1,
+                p: 2,
+              }}>
+                {/* Average Win Performance */}
+                <Box sx={{ 
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  p: 4,
+                  bgcolor: 'rgba(0, 255, 0, 0.08)',
+                  borderRadius: '18px',
+                  border: '1px solid rgba(0, 255, 0, 0.2)',
+                  transition: 'all 0.4s ease',
+                  backdropFilter: 'blur(12px)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  boxShadow: '0 6px 20px rgba(0, 255, 0, 0.1)',
+                  '&:hover': {
+                    bgcolor: 'rgba(0, 255, 0, 0.12)',
+                    border: '1px solid rgba(0, 255, 0, 0.3)',
+                    transform: 'translateY(-3px)',
+                    boxShadow: '0 12px 28px rgba(0, 255, 0, 0.2)',
+                  },
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '2px',
+                    background: 'linear-gradient(90deg, transparent, #00FF00, #00CC00, #00FF00, transparent)',
+                    opacity: 0.6,
+                  },
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'radial-gradient(circle at 50% 50%, rgba(0, 255, 0, 0.05), transparent 70%)',
+                    pointerEvents: 'none',
+                  }
+                }}>
+                  <Typography sx={{ 
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                    textAlign: 'center',
+                  }}>
+                    Win Performance
+                  </Typography>
+                  {combinedDifficulty.breakdown.wins.count > 0 ? (
+                    <Typography sx={{ 
+                      color: '#00FF00',
+                      fontSize: '1.4rem',
+                      fontWeight: 700,
+                      fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                      textShadow: '0 0 10px rgba(0, 255, 0, 0.3)',
+                    }}>
+                      {combinedDifficulty.breakdown.wins.averageScore.toFixed(1)}
+                    </Typography>
+                  ) : (
+                    <Typography sx={{ 
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
+                      fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                      fontStyle: 'italic',
+                    }}>
+                      No Wins
+                    </Typography>
+                  )}
+                </Box>
+
+                {/* Average Loss Performance */}
+                <Box sx={{ 
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  p: 4,
+                  bgcolor: 'rgba(255, 0, 0, 0.08)',
+                  borderRadius: '18px',
+                  border: '1px solid rgba(255, 0, 0, 0.2)',
+                  transition: 'all 0.4s ease',
+                  backdropFilter: 'blur(12px)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  boxShadow: '0 6px 20px rgba(255, 0, 0, 0.1)',
+                  '&:hover': {
+                    bgcolor: 'rgba(255, 0, 0, 0.12)',
+                    border: '1px solid rgba(255, 0, 0, 0.3)',
+                    transform: 'translateY(-3px)',
+                    boxShadow: '0 12px 28px rgba(255, 0, 0, 0.2)',
+                  },
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '2px',
+                    background: 'linear-gradient(90deg, transparent, #FF0000, #CC0000, #FF0000, transparent)',
+                    opacity: 0.6,
+                  },
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'radial-gradient(circle at 50% 50%, rgba(255, 0, 0, 0.05), transparent 70%)',
+                    pointerEvents: 'none',
+                  }
+                }}>
+                  <Typography sx={{ 
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                    textAlign: 'center',
+                  }}>
+                    Loss Performance
+                  </Typography>
+                  {combinedDifficulty.breakdown.losses.count > 0 ? (
+                    <Typography sx={{ 
+                      color: '#FF0000',
+                      fontSize: '1.4rem',
+                      fontWeight: 700,
+                      fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                      textShadow: '0 0 10px rgba(255, 0, 0, 0.3)',
+                    }}>
+                      {combinedDifficulty.breakdown.losses.averageScore.toFixed(1)}
+                    </Typography>
+                  ) : (
+                    <Typography sx={{ 
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
+                      fontFamily: '"Orbitron", "Roboto Mono", monospace',
+                      fontStyle: 'italic',
+                    }}>
+                      No Losses
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+              </Box>
+            </Box>
+          </Box>
+        )}
 
         {error ? (
           <Box sx={{ 
@@ -936,13 +1092,19 @@ const FightHistory: React.FC<FightHistoryProps> = ({ fighter, weightClassAvgData
                           }}>
                             Performance Score
                           </Typography>
-                          <DifficultyScore 
-                            opponentCode={opponentCode} 
-                            opponents={opponents}
-                            weightClassData={weightClassData}
-                            methodOfFinish={fight.methodOfFinish}
-                            actualRounds={fight.actualRounds}
-                          />
+                          {(() => {
+                            const opponent = opponents.find(o => o.fighterCode === opponentCode);
+                            if (!opponent) return null;
+                            return (
+                              <DifficultyScore 
+                                opponent={opponent}
+                                weightClassData={weightClassData}
+                                methodOfFinish={fight.methodOfFinish}
+                                actualRounds={fight.actualRounds}
+                                isWinner={isWinner}
+                              />
+                            );
+                          })()}
                         </Box>
                       </Box>
                     </Box>

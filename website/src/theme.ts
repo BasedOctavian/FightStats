@@ -18,7 +18,7 @@ const theme = createTheme({
       primary: '#ffffff',
       secondary: '#b0b0b0',
     },
-  },
+    },
   typography: {
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
@@ -32,6 +32,18 @@ const theme = createTheme({
     },
   },
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        '@keyframes shimmer': {
+          '0%': {
+            transform: 'translateX(-100%)',
+          },
+          '100%': {
+            transform: 'translateX(100%)',
+          },
+        },
+      },
+    },
     MuiCard: {
       styleOverrides: {
         root: {

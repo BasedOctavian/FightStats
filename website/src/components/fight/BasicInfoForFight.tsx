@@ -53,6 +53,336 @@ interface RadarDataPoint {
 const BasicInfoForFight: React.FC<BasicInfoForFightProps> = ({ fighter, fightStats, fightData, isAFighter }) => {
   if (!fightData) return null;
 
+  // Helper function to format record
+  const formatRecord = (wins: number, losses: number): string => {
+    return `${wins}-${losses}`;
+  };
+
+  const record = formatRecord(
+    fighter.fight_outcome_stats?.FighterWins || 0,
+    (fighter.fight_outcome_stats?.FighterLoss || 0) + 
+    (fighter.fight_outcome_stats?.FighterKOLoss || 0) + 
+    (fighter.fight_outcome_stats?.FighterSUBLoss || 0) + 
+    (fighter.fight_outcome_stats?.FighterTKOLoss || 0) + 
+    (fighter.fight_outcome_stats?.FighterUDLoss || 0) + 
+    (fighter.fight_outcome_stats?.FighterSplitDecLoss || 0) + 
+    (fighter.fight_outcome_stats?.FighterMajDecLoss || 0)
+  );
+
+  const renderFighterHeader = () => (
+    <Paper 
+      elevation={0} 
+      sx={{ 
+        p: 3,
+        mb: 4,
+        bgcolor: 'rgba(10, 14, 23, 0.8)',
+        borderRadius: '16px',
+        border: '1px solid rgba(0, 240, 255, 0.15)',
+        backdropFilter: 'blur(10px)',
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '2px',
+          background: 'linear-gradient(90deg, rgba(0, 240, 255, 0), rgba(0, 240, 255, 0.5), rgba(0, 240, 255, 0))',
+        }
+      }}
+    >
+      <Box sx={{ display: 'flex', gap: 4, alignItems: 'flex-start' }}>
+        {/* Fighter Image */}
+        {fighter.Image && (
+          <Box
+            sx={{
+              width: 150,
+              height: 150,
+              borderRadius: '12px',
+              overflow: 'hidden',
+              border: '2px solid rgba(0, 240, 255, 0.3)',
+              boxShadow: '0 0 20px rgba(0, 240, 255, 0.1)',
+              flexShrink: 0,
+              position: 'relative',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                boxShadow: 'inset 0 0 20px rgba(0, 240, 255, 0.2)',
+                pointerEvents: 'none',
+              }
+            }}
+          >
+            <img
+              src={fighter.Image}
+              alt={fighter.fighterName}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+              }}
+            />
+          </Box>
+        )}
+        
+        {/* Fighter Info */}
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography 
+            variant="h4" 
+            sx={{ 
+              color: '#fff',
+              fontWeight: 700,
+              mb: 1,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              textShadow: '0 0 20px rgba(0, 240, 255, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              flexWrap: 'wrap',
+            }}
+          >
+            {fighter.fighterName || fighter.name}
+            {fighter.nickname && (
+              <Typography
+                component="span"
+                variant="h5"
+                sx={{
+                  color: 'rgba(0, 240, 255, 0.8)',
+                  fontStyle: 'italic',
+                  fontWeight: 500,
+                }}
+              >
+                "{fighter.nickname}"
+              </Typography>
+            )}
+          </Typography>
+
+          {/* Fighter Details Grid */}
+          <Box sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 2,
+            mb: 3,
+            mt: 2,
+            bgcolor: 'rgba(0, 240, 255, 0.03)',
+            p: 2,
+            borderRadius: '12px',
+          }}>
+            {/* Physical Stats */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {fighter.height && (
+                <Typography variant="body2" sx={{ 
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}>
+                  <strong style={{ color: '#00F0FF', minWidth: '60px' }}>Height:</strong> {fighter.height}
+                </Typography>
+              )}
+              {fighter.reach && (
+                <Typography variant="body2" sx={{ 
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}>
+                  <strong style={{ color: '#00F0FF', minWidth: '60px' }}>Reach:</strong> {fighter.reach}
+                </Typography>
+              )}
+              {fighter.weight && (
+                <Typography variant="body2" sx={{ 
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}>
+                  <strong style={{ color: '#00F0FF', minWidth: '60px' }}>Weight:</strong> {fighter.weight}
+                </Typography>
+              )}
+              {fighter.weightClass && (
+                <Typography variant="body2" sx={{ 
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}>
+                  <strong style={{ color: '#00F0FF', minWidth: '60px' }}>Division:</strong> {fighter.weightClass}
+                </Typography>
+              )}
+              {fighter.AdjustedAge && (
+                <Typography variant="body2" sx={{ 
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}>
+                  <strong style={{ color: '#00F0FF', minWidth: '60px' }}>Age:</strong> {fighter.AdjustedAge}
+                </Typography>
+              )}
+            </Box>
+
+            {/* Personal Info */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {fighter.country && (
+                <Typography variant="body2" sx={{ 
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}>
+                  <strong style={{ color: '#00F0FF', minWidth: '60px' }}>Origin:</strong> {fighter.country}
+                </Typography>
+              )}
+              {fighter.team && (
+                <Typography variant="body2" sx={{ 
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}>
+                  <strong style={{ color: '#00F0FF', minWidth: '60px' }}>Team:</strong> {fighter.team}
+                </Typography>
+              )}
+              {fighter.stance && (
+                <Typography variant="body2" sx={{ 
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}>
+                  <strong style={{ color: '#00F0FF', minWidth: '60px' }}>Stance:</strong> {fighter.stance}
+                </Typography>
+              )}
+              {fighter.isActive !== undefined && (
+                <Typography variant="body2" sx={{ 
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}>
+                  <strong style={{ color: '#00F0FF', minWidth: '60px' }}>Status:</strong> 
+                  <Chip 
+                    label={fighter.isActive ? 'Active' : 'Inactive'} 
+                    size="small"
+                    sx={{ 
+                      bgcolor: fighter.isActive ? 'rgba(76, 175, 80, 0.2)' : 'rgba(244, 67, 54, 0.2)',
+                      color: fighter.isActive ? '#4CAF50' : '#f44336',
+                      fontWeight: 600,
+                      border: `1px solid ${fighter.isActive ? '#4CAF50' : '#f44336'}`,
+                      ml: 1,
+                    }} 
+                  />
+                </Typography>
+              )}
+            </Box>
+          </Box>
+
+          {/* Stats Chips */}
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 2, 
+            alignItems: 'center', 
+            flexWrap: 'wrap',
+            mt: 2,
+          }}>
+            <Chip 
+              label={`Record: ${record}`} 
+              sx={{ 
+                bgcolor: 'rgba(0, 240, 255, 0.1)', 
+                color: '#00F0FF',
+                fontWeight: 600,
+                border: '1px solid rgba(0, 240, 255, 0.3)',
+                px: 1,
+                '&:hover': {
+                  bgcolor: 'rgba(0, 240, 255, 0.15)',
+                }
+              }} 
+            />
+            <Chip 
+              label={`${fighter.FightsTracked || 0} fights tracked`} 
+              sx={{ 
+                bgcolor: 'rgba(0, 240, 255, 0.1)', 
+                color: '#00F0FF',
+                fontWeight: 600,
+                border: '1px solid rgba(0, 240, 255, 0.3)',
+                px: 1,
+                '&:hover': {
+                  bgcolor: 'rgba(0, 240, 255, 0.15)',
+                }
+              }} 
+            />
+            {fighter.MinutesTracked && (
+              <Chip 
+                label={`${fighter.MinutesTracked} minutes tracked`} 
+                sx={{ 
+                  bgcolor: 'rgba(0, 240, 255, 0.1)', 
+                  color: '#00F0FF',
+                  fontWeight: 600,
+                  border: '1px solid rgba(0, 240, 255, 0.3)',
+                  px: 1,
+                  '&:hover': {
+                    bgcolor: 'rgba(0, 240, 255, 0.15)',
+                  }
+                }} 
+              />
+            )}
+            {fighter.RoundsTracked && (
+              <Chip 
+                label={`${fighter.RoundsTracked} rounds tracked`} 
+                sx={{ 
+                  bgcolor: 'rgba(0, 240, 255, 0.1)', 
+                  color: '#00F0FF',
+                  fontWeight: 600,
+                  border: '1px solid rgba(0, 240, 255, 0.3)',
+                  px: 1,
+                  '&:hover': {
+                    bgcolor: 'rgba(0, 240, 255, 0.15)',
+                  }
+                }} 
+              />
+            )}
+            {fighter.NumberOfKnockDowns !== undefined && (
+              <Chip 
+                label={`${fighter.NumberOfKnockDowns} knockdowns`} 
+                sx={{ 
+                  bgcolor: 'rgba(255, 193, 7, 0.1)', 
+                  color: '#FFC107',
+                  fontWeight: 600,
+                  border: '1px solid rgba(255, 193, 7, 0.3)',
+                  px: 1,
+                  '&:hover': {
+                    bgcolor: 'rgba(255, 193, 7, 0.15)',
+                  }
+                }} 
+              />
+            )}
+            {fighter.NumberOfStuns !== undefined && (
+              <Chip 
+                label={`${fighter.NumberOfStuns} stuns`} 
+                sx={{ 
+                  bgcolor: 'rgba(255, 152, 0, 0.1)', 
+                  color: '#FF9800',
+                  fontWeight: 600,
+                  border: '1px solid rgba(255, 152, 0, 0.3)',
+                  px: 1,
+                  '&:hover': {
+                    bgcolor: 'rgba(255, 152, 0, 0.15)',
+                  }
+                }} 
+              />
+            )}
+          </Box>
+        </Box>
+      </Box>
+    </Paper>
+  );
+
   const calculateStatsPerMinute = (value: number) => {
     let totalMinutes = 0;
     const rounds = fightData.Rounds;
@@ -1313,6 +1643,7 @@ const BasicInfoForFight: React.FC<BasicInfoForFightProps> = ({ fighter, fightSta
 
   return (
     <>
+      {renderFighterHeader()}
       {renderPerformanceComparison()}
       {renderPerformanceInsights()}
       <Grid container spacing={4}>

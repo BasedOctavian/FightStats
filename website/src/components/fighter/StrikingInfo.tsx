@@ -1,7 +1,7 @@
 import React from 'react';
 import { Paper, Typography, Grid, Box, Switch, FormControlLabel, Collapse, IconButton } from '@mui/material';
 import { ExpandMore, ExpandLess } from '@mui/icons-material';
-import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
+import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip as RechartsTooltip, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, ZAxis } from 'recharts';
 import { Fighter } from '../../types/firestore';
 import { useBasicInfo } from '../../hooks/stats/useBasicInfo';
 import { useStrikingInfo } from '../../hooks/stats/useStrikingInfo';
@@ -872,6 +872,121 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
     return overallDefenseRating;
   }, [fighter, weightClassAvgData]);
 
+  // Prepare bubble chart data for strike selection analysis
+  const prepareStrikeSelectionBubbleData = React.useMemo(() => {
+    const leftStats = fighter.left_hand_stats || {};
+    const rightStats = fighter.right_hand_stats || {};
+    
+    // Define strike categories with their data
+    const strikeCategories = [
+      {
+        name: 'Jabs',
+        leftLanded: (leftStats.LeftJabHiMake || 0) + (leftStats.LeftJabLoMake || 0),
+        leftThrown: (leftStats.LeftJabHiMake || 0) + (leftStats.LeftJabHiMiss || 0) + (leftStats.LeftJabLoMake || 0) + (leftStats.LeftJabLoMiss || 0),
+        rightLanded: (rightStats.RightJabHiMake || 0) + (rightStats.RightJabLoMake || 0),
+        rightThrown: (rightStats.RightJabHiMake || 0) + (rightStats.RightJabHiMiss || 0) + (rightStats.RightJabLoMake || 0) + (rightStats.RightJabLoMiss || 0),
+      },
+      {
+        name: 'Cross',
+        leftLanded: leftStats.LeftCrossMake || 0,
+        leftThrown: (leftStats.LeftCrossMake || 0) + (leftStats.LeftCrossMissed || 0),
+        rightLanded: rightStats.RightCrossMake || 0,
+        rightThrown: (rightStats.RightCrossMake || 0) + (rightStats.RightCrossMissed || 0),
+      },
+      {
+        name: 'Hooks',
+        leftLanded: (leftStats.LeftHookHiMake || 0) + (leftStats.LeftHookLoMake || 0),
+        leftThrown: (leftStats.LeftHookHiMake || 0) + (leftStats.LeftHookHiMiss || 0) + (leftStats.LeftHookLoMake || 0) + (leftStats.LeftHookLoMiss || 0),
+        rightLanded: (rightStats.RightHookHiMake || 0) + (rightStats.RightHookLoMake || 0),
+        rightThrown: (rightStats.RightHookHiMake || 0) + (rightStats.RightHookHiMiss || 0) + (rightStats.RightHookLoMake || 0) + (rightStats.RightHookLoMiss || 0),
+      },
+      {
+        name: 'Uppercuts',
+        leftLanded: (leftStats.LeftUppercutHiMake || 0) + (leftStats.LeftUppercutLoMake || 0),
+        leftThrown: (leftStats.LeftUppercutHiMake || 0) + (leftStats.LeftUppercutHiMiss || 0) + (leftStats.LeftUppercutLoMake || 0) + (leftStats.LeftUppercutLoMiss || 0),
+        rightLanded: (rightStats.RightUppercutHiMake || 0) + (rightStats.RightUppercutLoMake || 0),
+        rightThrown: (rightStats.RightUppercutHiMake || 0) + (rightStats.RightUppercutHiMiss || 0) + (rightStats.RightUppercutLoMake || 0) + (rightStats.RightUppercutLoMiss || 0),
+      },
+      {
+        name: 'Straights',
+        leftLanded: (leftStats.LeftStraightHiMake || 0) + (leftStats.LeftStraightLoMake || 0),
+        leftThrown: (leftStats.LeftStraightHiMake || 0) + (leftStats.LeftStraightHiMiss || 0) + (leftStats.LeftStraightLoMake || 0) + (leftStats.LeftStraightLoMiss || 0),
+        rightLanded: (rightStats.RightStraightHiMake || 0) + (rightStats.RightStraightLoMake || 0),
+        rightThrown: (rightStats.RightStraightHiMake || 0) + (rightStats.RightStraightHiMiss || 0) + (rightStats.RightStraightLoMake || 0) + (rightStats.RightStraightLoMiss || 0),
+      },
+      {
+        name: 'Overhand',
+        leftLanded: leftStats.LeftOverhandMake || 0,
+        leftThrown: (leftStats.LeftOverhandMake || 0) + (leftStats.LeftOverhandMiss || 0),
+        rightLanded: rightStats.RightOverhandMake || 0,
+        rightThrown: (rightStats.RightOverhandMake || 0) + (rightStats.RightOverhandMiss || 0),
+      },
+      {
+        name: 'Body Kicks',
+        leftLanded: leftStats.LeftBodyKickMake || 0,
+        leftThrown: (leftStats.LeftBodyKickMake || 0) + (leftStats.LeftBodyKickMiss || 0),
+        rightLanded: rightStats.RightBodyKickMake || 0,
+        rightThrown: (rightStats.RightBodyKickMake || 0) + (rightStats.RightBodyKickMiss || 0),
+      },
+      {
+        name: 'High Kicks',
+        leftLanded: leftStats.LeftHighKickMake || 0,
+        leftThrown: (leftStats.LeftHighKickMake || 0) + (leftStats.LeftHighKickMiss || 0),
+        rightLanded: rightStats.RightHighKickMake || 0,
+        rightThrown: (rightStats.RightHighKickMake || 0) + (rightStats.RightHighKickMiss || 0),
+      },
+      {
+        name: 'Leg Kicks',
+        leftLanded: leftStats.LeftLegKickMake || 0,
+        leftThrown: (leftStats.LeftLegKickMake || 0) + (leftStats.LeftLegKickMiss || 0),
+        rightLanded: rightStats.RightLegKickMake || 0,
+        rightThrown: (rightStats.RightLegKickMake || 0) + (rightStats.RightLegKickMiss || 0),
+      },
+      {
+        name: 'Elbows',
+        leftLanded: leftStats.LeftElbowMake || 0,
+        leftThrown: (leftStats.LeftElbowMake || 0) + (leftStats.LeftElbowMiss || 0),
+        rightLanded: rightStats.RightElbowMake || 0,
+        rightThrown: (rightStats.RightElbowMake || 0) + (rightStats.RightElbowMiss || 0),
+      },
+      {
+        name: 'Spin Back Fist',
+        leftLanded: leftStats.LeftSpinBackFistMake || 0,
+        leftThrown: (leftStats.LeftSpinBackFistMake || 0) + (leftStats.LeftSpinBackFistMiss || 0),
+        rightLanded: rightStats.RightSpinBackFistMake || 0,
+        rightThrown: (rightStats.RightSpinBackFistMake || 0) + (rightStats.RightSpinBackFistMiss || 0),
+      }
+    ];
+
+    // Calculate total strikes thrown across all categories
+    const totalStrikesThrown = strikeCategories.reduce((sum, category) => {
+      return sum + category.leftThrown + category.rightThrown;
+    }, 0);
+
+    // Transform data for bubble chart
+    return strikeCategories
+      .filter(category => category.leftThrown > 0 || category.rightThrown > 0)
+      .map(category => {
+        const totalLanded = category.leftLanded + category.rightLanded;
+        const totalThrown = category.leftThrown + category.rightThrown;
+        const connectionPercent = totalThrown > 0 ? (totalLanded / totalThrown) * 100 : 0;
+        const usagePercent = totalStrikesThrown > 0 ? (totalThrown / totalStrikesThrown) * 100 : 0;
+        
+        return {
+          strikeType: category.name,
+          connectionPercent: Math.round(connectionPercent * 10) / 10, // Round to 1 decimal
+          usagePercent: Math.round(usagePercent * 10) / 10, // Round to 1 decimal
+          strikesLanded: totalLanded,
+          leftLanded: category.leftLanded,
+          rightLanded: category.rightLanded,
+          leftThrown: category.leftThrown,
+          rightThrown: category.rightThrown,
+          totalThrown: totalThrown
+        };
+      })
+      .sort((a, b) => b.usagePercent - a.usagePercent); // Sort by usage percentage descending
+  }, [fighter]);
+
   return (
     <Paper 
       elevation={0} 
@@ -1302,8 +1417,8 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                        <Radar
                          name="Fighter Stats"
                          dataKey="value"
-                         stroke="#00F0FF"
-                         fill="#00F0FF"
+                         stroke="#8B5CF6"
+                         fill="#8B5CF6"
                          fillOpacity={0.3}
                        />
                        <RechartsTooltip content={<CustomTooltip />} />
@@ -1314,9 +1429,8 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                    <Box 
                      sx={{ 
                        position: 'absolute',
-                       bottom: 10,
-                       left: '50%',
-                       transform: 'translateX(-50%)',
+                       top: 10,
+                       right: 10,
                        display: 'flex',
                        gap: 3,
                        bgcolor: 'rgba(10, 14, 23, 0.9)',
@@ -1330,9 +1444,9 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                        <Box sx={{ 
                          width: 12, 
                          height: 12, 
-                         bgcolor: '#00F0FF',
+                         bgcolor: '#8B5CF6',
                          borderRadius: '50%',
-                         boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                         boxShadow: '0 0 10px rgba(139, 92, 246, 0.5)',
                        }} />
                        <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
                      </Box>
@@ -2089,8 +2203,8 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                            <Radar
                              name="Fighter Stats"
                              dataKey="value"
-                             stroke="#00F0FF"
-                             fill="#00F0FF"
+                             stroke="#8B5CF6"
+                             fill="#8B5CF6"
                              fillOpacity={0.3}
                            />
                            <RechartsTooltip content={<CustomTooltip />} />
@@ -2101,9 +2215,8 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                        <Box 
                          sx={{ 
                            position: 'absolute',
-                           bottom: 10,
-                           left: '50%',
-                           transform: 'translateX(-50%)',
+                           top: 10,
+                           right: 10,
                            display: 'flex',
                            gap: 3,
                            bgcolor: 'rgba(10, 14, 23, 0.9)',
@@ -2117,9 +2230,9 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                            <Box sx={{ 
                              width: 12, 
                              height: 12, 
-                             bgcolor: '#00F0FF',
+                             bgcolor: '#8B5CF6',
                              borderRadius: '50%',
-                             boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                             boxShadow: '0 0 10px rgba(139, 92, 246, 0.5)',
                            }} />
                            <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
                          </Box>
@@ -2883,8 +2996,8 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                            <Radar
                              name="Fighter Stats"
                              dataKey="value"
-                             stroke="#00F0FF"
-                             fill="#00F0FF"
+                             stroke="#8B5CF6"
+                             fill="#8B5CF6"
                              fillOpacity={0.3}
                            />
                            <RechartsTooltip content={<CustomTooltip />} />
@@ -2895,9 +3008,8 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                        <Box 
                          sx={{ 
                            position: 'absolute',
-                           bottom: 10,
-                           left: '50%',
-                           transform: 'translateX(-50%)',
+                           top: 10,
+                           right: 10,
                            display: 'flex',
                            gap: 3,
                            bgcolor: 'rgba(10, 14, 23, 0.9)',
@@ -2911,9 +3023,9 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                            <Box sx={{ 
                              width: 12, 
                              height: 12, 
-                             bgcolor: '#00F0FF',
+                             bgcolor: '#8B5CF6',
                              borderRadius: '50%',
-                             boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                             boxShadow: '0 0 10px rgba(139, 92, 246, 0.5)',
                            }} />
                            <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
                          </Box>
@@ -3566,8 +3678,8 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                           <Radar
                             name="Fighter Stats"
                             dataKey="value"
-                            stroke="#00F0FF"
-                            fill="#00F0FF"
+                            stroke="#8B5CF6"
+                            fill="#8B5CF6"
                             fillOpacity={0.3}
                           />
                           <RechartsTooltip content={<CustomTooltip />} />
@@ -3578,9 +3690,8 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                       <Box 
                         sx={{ 
                           position: 'absolute',
-                          bottom: 10,
-                          left: '50%',
-                          transform: 'translateX(-50%)',
+                          top: 10,
+                          right: 10,
                           display: 'flex',
                           gap: 3,
                           bgcolor: 'rgba(10, 14, 23, 0.9)',
@@ -3594,9 +3705,9 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                           <Box sx={{ 
                             width: 12, 
                             height: 12, 
-                            bgcolor: '#00F0FF',
+                            bgcolor: '#8B5CF6',
                             borderRadius: '50%',
-                            boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                            boxShadow: '0 0 10px rgba(139, 92, 246, 0.5)',
                           }} />
                           <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
                         </Box>
@@ -4208,6 +4319,154 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                  })()}
                </Grid>
              </Box>
+
+             {/* Strike Selection Bubble Chart */}
+             <Box sx={{ mt: 4 }}>
+               <Typography sx={{
+                 color: '#FFFFFF',
+                 fontWeight: 600,
+                 fontSize: '1.1rem',
+                 mb: 3,
+                 textTransform: 'uppercase',
+                 letterSpacing: '0.05em',
+                 textAlign: 'center',
+                 position: 'relative',
+                 '&::after': {
+                   content: '""',
+                   position: 'absolute',
+                   bottom: -8,
+                   left: '50%',
+                   transform: 'translateX(-50%)',
+                   width: '60px',
+                   height: '2px',
+                   background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+                 }
+               }}>
+                 Strike Selection Bubble Analysis
+               </Typography>
+               
+               <Box sx={{
+                 p: 3,
+                 borderRadius: '12px',
+                 bgcolor: 'rgba(10, 14, 23, 0.4)',
+                 border: '1px solid rgba(0, 240, 255, 0.15)',
+                 height: '500px',
+                 position: 'relative',
+                 overflow: 'hidden',
+                 transition: 'all 0.3s ease',
+                 '&:hover': {
+                   bgcolor: 'rgba(10, 14, 23, 0.6)',
+                   border: '1px solid rgba(0, 240, 255, 0.3)',
+                 },
+                 '&::before': {
+                   content: '""',
+                   position: 'absolute',
+                   top: 0,
+                   left: 0,
+                   right: 0,
+                   height: '1px',
+                   background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+                   opacity: 0.5,
+                 }
+               }}>
+                                   {prepareStrikeSelectionBubbleData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ScatterChart
+                        margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                        data={prepareStrikeSelectionBubbleData}
+                     >
+                       <CartesianGrid 
+                         strokeDasharray="3 3" 
+                         stroke="rgba(0, 240, 255, 0.1)"
+                       />
+                       <XAxis 
+                         type="category" 
+                         dataKey="strikeType" 
+                         name="Strike Type"
+                         tick={{ fill: '#FFFFFF', fontSize: 12 }}
+                         axisLine={{ stroke: 'rgba(0, 240, 255, 0.3)' }}
+                         tickLine={{ stroke: 'rgba(0, 240, 255, 0.3)' }}
+                       />
+                       <YAxis 
+                         type="number" 
+                         dataKey="connectionPercent" 
+                         name="Connection %"
+                         domain={[0, 100]}
+                         tick={{ fill: '#FFFFFF', fontSize: 12 }}
+                         axisLine={{ stroke: 'rgba(0, 240, 255, 0.3)' }}
+                         tickLine={{ stroke: 'rgba(0, 240, 255, 0.3)' }}
+                         label={{ 
+                           value: 'Connection Percentage (%)', 
+                           angle: -90, 
+                           position: 'insideLeft',
+                           style: { textAnchor: 'middle', fill: '#FFFFFF', fontSize: 12 }
+                         }}
+                       />
+                       <ZAxis 
+                         type="number" 
+                         dataKey="usagePercent" 
+                         range={[80, 600]}
+                         name="Usage Percentage"
+                       />
+                       <RechartsTooltip
+                         content={({ active, payload }) => {
+                           if (active && payload && payload.length) {
+                             const data = payload[0].payload;
+                             return (
+                               <Box
+                                 sx={{
+                                   bgcolor: 'rgba(10, 14, 23, 0.95)',
+                                   border: '1px solid rgba(0, 240, 255, 0.3)',
+                                   p: 2,
+                                   borderRadius: '6px',
+                                   backdropFilter: 'blur(10px)',
+                                   maxWidth: 280,
+                                   boxShadow: '0 4px 12px rgba(0, 240, 255, 0.1)',
+                                 }}
+                               >
+                                 <Typography sx={{ color: '#00F0FF', fontWeight: 600, mb: 1 }}>
+                                   {data.strikeType}
+                                 </Typography>
+                                 <Typography sx={{ color: '#fff', fontSize: '0.9rem', mb: 1 }}>
+                                   Connection: {data.connectionPercent}%
+                                 </Typography>
+                                 <Typography sx={{ color: '#fff', fontSize: '0.9rem', mb: 1 }}>
+                                   Usage: {data.usagePercent}%
+                                 </Typography>
+
+                               </Box>
+                             );
+                           }
+                           return null;
+                         }}
+                       />
+                       <Scatter 
+                         dataKey="usagePercent" 
+                         fill="rgba(0, 240, 255, 0.8)"
+                         stroke="rgba(0, 240, 255, 1)"
+                         strokeWidth={2}
+                       />
+                     </ScatterChart>
+                   </ResponsiveContainer>
+                 ) : (
+                   <Box sx={{
+                     display: 'flex',
+                     alignItems: 'center',
+                     justifyContent: 'center',
+                     height: '100%',
+                     textAlign: 'center',
+                   }}>
+                     <Typography sx={{
+                       color: 'rgba(255, 255, 255, 0.6)',
+                       fontSize: '0.9rem',
+                       fontStyle: 'italic',
+                     }}>
+                       No strike selection data available
+                     </Typography>
+                   </Box>
+                 )}
+               </Box>
+             </Box>
                </Box>
              </Collapse>
            </Box>
@@ -4660,8 +4919,8 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                            <Radar
                              name="Fighter Stats"
                              dataKey="value"
-                             stroke="#00F0FF"
-                             fill="#00F0FF"
+                             stroke="#8B5CF6"
+                             fill="#8B5CF6"
                              fillOpacity={0.3}
                            />
                            <RechartsTooltip content={<CustomTooltip />} />
@@ -4672,9 +4931,8 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                        <Box 
                          sx={{ 
                            position: 'absolute',
-                           bottom: 10,
-                           left: '50%',
-                           transform: 'translateX(-50%)',
+                           top: 10,
+                           right: 10,
                            display: 'flex',
                            gap: 3,
                            bgcolor: 'rgba(10, 14, 23, 0.9)',
@@ -4688,9 +4946,9 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                            <Box sx={{ 
                              width: 12, 
                              height: 12, 
-                             bgcolor: '#00F0FF',
+                             bgcolor: '#8B5CF6',
                              borderRadius: '50%',
-                             boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                             boxShadow: '0 0 10px rgba(139, 92, 246, 0.5)',
                            }} />
                            <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
                          </Box>

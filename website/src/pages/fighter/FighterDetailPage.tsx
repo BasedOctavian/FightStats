@@ -13,6 +13,7 @@ import {
   Tab,
   Fade,
 } from '@mui/material';
+import LoadingScreen from '../../components/common/LoadingScreen';
 import {
   ArrowBack as ArrowBackIcon,
   Analytics as AnalyticsIcon,
@@ -20,6 +21,7 @@ import {
   SportsMartialArts as StrikingIcon,
   Sports as GrapplingIcon,
   DirectionsRun as MovementIcon,
+  Bolt as ComboIcon,
 } from '@mui/icons-material';
 import { useFighter } from '../../hooks/useFighters';
 import BasicInfo from '../../components/fighter/BasicInfo';
@@ -27,6 +29,7 @@ import FightHistory from '../../components/fighter/FightHistory';
 import StrikingInfo from '../../components/fighter/StrikingInfo';
 import GrapplingInfo from '../../components/fighter/GrapplingInfo';
 import MovementInfo from '../../components/fighter/MovementInfo';
+import ComboInfo from '../../components/fighter/ComboInfo';
 import { useWeightClass } from '../../hooks/useWeightClass';
 
 // Helper function to format record
@@ -85,6 +88,9 @@ const FighterDetailPage: React.FC = () => {
     error: any;
   };
 
+  // Combined loading state
+  const isDataLoading = loading || weightClassLoading;
+
   // Log weight class data fields
   useEffect(() => {
     if (weightClassData) {
@@ -96,7 +102,7 @@ const FighterDetailPage: React.FC = () => {
     }
   }, [weightClassData, weightClassError]);
 
-  // Define tabs - Overview, Striking, Grappling, Movement, and Fight History
+  // Define tabs - Overview, Striking, Grappling, Movement, Combinations, and Fight History
   const tabs = useMemo(() => {
     if (!fighter) return [];
     
@@ -122,6 +128,11 @@ const FighterDetailPage: React.FC = () => {
         component: <MovementInfo fighter={fighter} weightClassAvgData={weightClassData} />
       },
       {
+        icon: <ComboIcon />,
+        label: "Combinations",
+        component: <ComboInfo fighter={fighter} weightClassAvgData={weightClassData} />
+      },
+      {
         icon: <HistoryIcon />,
         label: "Fight History",
         component: <FightHistory fighter={fighter} weightClassAvgData={weightClassData} />
@@ -142,35 +153,14 @@ const FighterDetailPage: React.FC = () => {
     navigate('/');
   };
 
-  if (loading) {
+  if (isDataLoading) {
     return (
-      <Box sx={{ 
-        minHeight: '100vh', 
-        bgcolor: '#0A0E17',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #0A0E17 0%, #1A1F2E 100%)',
-      }}>
-        <Box sx={{ position: 'relative' }}>
-          <CircularProgress 
-            size={80} 
-            sx={{ 
-              color: '#00F0FF',
-              opacity: 0.3,
-            }} 
-          />
-          <CircularProgress 
-            size={60} 
-            sx={{ 
-              color: '#00F0FF',
-              position: 'absolute',
-              left: '10px',
-              top: '10px',
-            }} 
-          />
-        </Box>
-      </Box>
+      <LoadingScreen 
+        message="Loading fighter data..." 
+        size="large"
+        showLogo={true}
+        fullScreen={true}
+      />
     );
   }
 

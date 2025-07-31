@@ -23,6 +23,7 @@ import {
   Radar,
   Tooltip as RechartsTooltip,
 } from 'recharts';
+import { useWeightClass } from '../../hooks/useWeightClass';
 
 interface FightStatsProps {
   fightStats: {
@@ -78,6 +79,7 @@ interface FightStatsProps {
     Rounds: number;
     Time: string;
   };
+  weightClassAvgData?: any; // Add weight class data prop
 }
 
 // Common styles
@@ -121,7 +123,14 @@ const glowEffect = {
   pointerEvents: 'none',
 };
 
-const FightStats: React.FC<FightStatsProps> = ({ fightStats }) => {
+const FightStats: React.FC<FightStatsProps> = ({ fightStats, weightClassAvgData }) => {
+  // Get weight class data if not provided as prop
+  const weightClassName = weightClassAvgData ? null : fightStats.weightClass;
+  const { weightClass: fetchedWeightClassData, loading: weightClassLoading } = useWeightClass(weightClassName);
+  
+  // Use provided weight class data or fetched data
+  const weightClassData = weightClassAvgData || fetchedWeightClassData;
+
   // Calculate total strikes for each fighter
   const calculateTotalStrikes = (fighter: 'a' | 'b') => {
     const prefix = fighter;
@@ -145,6 +154,29 @@ const FightStats: React.FC<FightStatsProps> = ({ fightStats }) => {
   const fighterATotalStrikes = calculateTotalStrikes('a');
   const fighterBTotalStrikes = calculateTotalStrikes('b');
 
+  // Calculate weight class average strikes per minute
+  const calculateWeightClassStrikesPerMinute = () => {
+    if (!weightClassData) return 0;
+    
+    const weightClassMinutes = weightClassData.minutes || 1;
+    const weightClassTotalStrikes = weightClassData.TotalStrikesLanded || 0;
+    const weightClassClinchStrikes = weightClassData.TotalClinchStrikesMade || 0;
+    const weightClassGroundStrikes = weightClassData.TotalGroundStrikesMade || 0;
+    
+    // Exclude clinch and ground strikes from the calculation
+    const weightClassStandingStrikes = weightClassTotalStrikes - weightClassClinchStrikes - weightClassGroundStrikes;
+    
+    return weightClassStandingStrikes / weightClassMinutes;
+  };
+
+  const weightClassStrikesPerMinute = calculateWeightClassStrikesPerMinute();
+
+  // Calculate percentage difference from weight class average
+  const calculatePercentageDifference = (fighterStrikesPerMinute: number) => {
+    if (!weightClassData || weightClassStrikesPerMinute === 0) return 0;
+    return ((fighterStrikesPerMinute - weightClassStrikesPerMinute) / weightClassStrikesPerMinute) * 100;
+  };
+
   // Add context information for each stat type
   const statDescriptions = {
     strikes: "Total number of significant strikes landed",
@@ -167,11 +199,53 @@ const FightStats: React.FC<FightStatsProps> = ({ fightStats }) => {
   };
 
   // Calculate fight duration in minutes and seconds
-  const [minutes, seconds] = fightStats.Time.split(':').map(Number);
-  const totalSeconds = (minutes * 60) + seconds;
+  // For a 5-round fight, each round is 5 minutes, so total should be 25 minutes
+  // The Time field appears to be just the final round time, not total fight time
+  const rounds = fightStats.Rounds;
+  const [finalRoundMinutes, finalRoundSeconds] = fightStats.Time.split(':').map(Number);
+  
+  // Calculate total fight time: (rounds - 1) * 5 minutes + final round time
+  const fullRoundsMinutes = (rounds - 1) * 5; // Full 5-minute rounds
+  const finalRoundTotalSeconds = (finalRoundMinutes * 60) + finalRoundSeconds;
+  const totalSeconds = (fullRoundsMinutes * 60) + finalRoundTotalSeconds;
+  const totalMinutes = totalSeconds / 60;
+  
+  // Console logging for debugging
+  console.group('FightStats - Strike Rate Calculation');
+  console.log('Fight Duration Calculation:', {
+    rounds: rounds,
+    timeString: fightStats.Time,
+    finalRoundMinutes: finalRoundMinutes,
+    finalRoundSeconds: finalRoundSeconds,
+    fullRoundsMinutes: fullRoundsMinutes,
+    finalRoundTotalSeconds: finalRoundTotalSeconds,
+    totalSeconds: totalSeconds,
+    totalMinutes: totalMinutes.toFixed(2)
+  });
+  console.log('Total Strikes:', {
+    [fightStats.fighterAName]: fighterATotalStrikes,
+    [fightStats.fighterBName]: fighterBTotalStrikes
+  });
+  console.log('Strikes Per Minute:', {
+    [fightStats.fighterAName]: (fighterATotalStrikes / totalMinutes).toFixed(2),
+    [fightStats.fighterBName]: (fighterBTotalStrikes / totalMinutes).toFixed(2),
+    'Weight Class Average': weightClassStrikesPerMinute.toFixed(2)
+  });
+  console.log('Weight Class Data:', {
+    weightClass: fightStats.weightClass,
+    hasWeightClassData: !!weightClassData,
+    weightClassMinutes: weightClassData?.minutes,
+    weightClassTotalStrikes: weightClassData?.TotalStrikesLanded,
+    weightClassClinchStrikes: weightClassData?.TotalClinchStrikesMade,
+    weightClassGroundStrikes: weightClassData?.TotalGroundStrikesMade,
+    weightClassStandingStrikes: weightClassData ? 
+      (weightClassData.TotalStrikesLanded || 0) - (weightClassData.TotalClinchStrikesMade || 0) - (weightClassData.TotalGroundStrikesMade || 0) : 0
+  });
+  console.groupEnd();
+  
   const strikesPerMinute = {
-    [fightStats.fighterAName]: (fighterATotalStrikes / (totalSeconds / 60)).toFixed(1),
-    [fightStats.fighterBName]: (fighterBTotalStrikes / (totalSeconds / 60)).toFixed(1),
+    [fightStats.fighterAName]: (fighterATotalStrikes / totalMinutes).toFixed(1),
+    [fightStats.fighterBName]: (fighterBTotalStrikes / totalMinutes).toFixed(1),
   };
 
   // Prepare data for strike distribution chart
@@ -271,23 +345,7 @@ const FightStats: React.FC<FightStatsProps> = ({ fightStats }) => {
     ];
   };
 
-  // Calculate fight momentum
-  const calculateMomentum = () => {
-    const rounds = Array.from({ length: fightStats.Rounds }, (_, i) => i + 1);
-    let aStrikes = 0;
-    let bStrikes = 0;
-    
-    return rounds.map(round => {
-      aStrikes += fightStats[`Around${round}StrikesLanded` as keyof typeof fightStats] as number;
-      bStrikes += fightStats[`Bround${round}StrikesLanded` as keyof typeof fightStats] as number;
-      
-      return {
-        round,
-        [fightStats.fighterAName]: aStrikes,
-        [fightStats.fighterBName]: bStrikes,
-      };
-    });
-  };
+
 
   return (
     <Box sx={{ mt: 6 }}>
@@ -365,7 +423,7 @@ const FightStats: React.FC<FightStatsProps> = ({ fightStats }) => {
 
       {/* Strike Rate Information */}
       <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={4}>
           <Paper sx={{ ...cardStyle, p: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="body1" color="#00F0FF">
@@ -378,9 +436,29 @@ const FightStats: React.FC<FightStatsProps> = ({ fightStats }) => {
                 </Typography>
               </Typography>
             </Box>
+            {weightClassData && (
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="caption" color="rgba(255, 255, 255, 0.6)">
+                  vs {fightStats.weightClass} avg: {weightClassStrikesPerMinute.toFixed(1)}
+                </Typography>
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    ml: 1,
+                    color: calculatePercentageDifference(Number(strikesPerMinute[fightStats.fighterAName])) > 0 ? '#4CAF50' : '#FF5722'
+                  }}
+                >
+                  {calculatePercentageDifference(Number(strikesPerMinute[fightStats.fighterAName])) > 0 ? '↑' : '↓'}
+                  {Math.abs(calculatePercentageDifference(Number(strikesPerMinute[fightStats.fighterAName]))).toFixed(0)}%
+                </Typography>
+                <Typography variant="caption" color="rgba(255, 255, 255, 0.5)" sx={{ display: 'block', mt: 0.5 }}>
+                  *Excludes ground & clinch strikes
+                </Typography>
+              </Box>
+            )}
           </Paper>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={4}>
           <Paper sx={{ ...cardStyle, p: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="body1" color="#FF3864">
@@ -393,8 +471,86 @@ const FightStats: React.FC<FightStatsProps> = ({ fightStats }) => {
                 </Typography>
               </Typography>
             </Box>
+            {weightClassData && (
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="caption" color="rgba(255, 255, 255, 0.6)">
+                  vs {fightStats.weightClass} avg: {weightClassStrikesPerMinute.toFixed(1)}
+                </Typography>
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    ml: 1,
+                    color: calculatePercentageDifference(Number(strikesPerMinute[fightStats.fighterBName])) > 0 ? '#4CAF50' : '#FF5722'
+                  }}
+                >
+                  {calculatePercentageDifference(Number(strikesPerMinute[fightStats.fighterBName])) > 0 ? '↑' : '↓'}
+                  {Math.abs(calculatePercentageDifference(Number(strikesPerMinute[fightStats.fighterBName]))).toFixed(0)}%
+                </Typography>
+                <Typography variant="caption" color="rgba(255, 255, 255, 0.5)" sx={{ display: 'block', mt: 0.5 }}>
+                  *Excludes ground & clinch strikes
+                </Typography>
+              </Box>
+            )}
           </Paper>
         </Grid>
+        {weightClassData && (
+          <Grid item xs={12} md={4}>
+            <Paper sx={{ ...cardStyle, p: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body1" color="rgba(255, 255, 255, 0.8)">
+                  {fightStats.weightClass} Average
+                </Typography>
+                <Typography variant="h5" color="rgba(255, 255, 255, 0.8)">
+                  {weightClassStrikesPerMinute.toFixed(1)}
+                  <Typography component="span" variant="body2" color="rgba(255, 255, 255, 0.7)" sx={{ ml: 1 }}>
+                    strikes/min
+                  </Typography>
+                </Typography>
+              </Box>
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="caption" color="rgba(255, 255, 255, 0.6)">
+                  Based on {weightClassData.fights || 0} fights
+                </Typography>
+                <Typography variant="caption" color="rgba(255, 255, 255, 0.5)" sx={{ display: 'block', mt: 0.5 }}>
+                  *Excludes ground & clinch strikes
+                </Typography>
+              </Box>
+            </Paper>
+          </Grid>
+        )}
+        {weightClassLoading && (
+          <Grid item xs={12} md={4}>
+            <Paper sx={{ ...cardStyle, p: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body1" color="rgba(255, 255, 255, 0.8)">
+                  {fightStats.weightClass} Average
+                </Typography>
+                <Typography variant="h5" color="rgba(255, 255, 255, 0.8)">
+                  Loading...
+                </Typography>
+              </Box>
+            </Paper>
+          </Grid>
+        )}
+        {!weightClassData && !weightClassLoading && (
+          <Grid item xs={12} md={4}>
+            <Paper sx={{ ...cardStyle, p: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body1" color="rgba(255, 255, 255, 0.6)">
+                  Weight Class Comparison
+                </Typography>
+                <Typography variant="h6" color="rgba(255, 255, 255, 0.6)">
+                  Not Available
+                </Typography>
+              </Box>
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="caption" color="rgba(255, 255, 255, 0.5)">
+                  No data for {fightStats.weightClass}
+                </Typography>
+              </Box>
+            </Paper>
+          </Grid>
+        )}
       </Grid>
 
       <Grid container spacing={4}>
@@ -582,45 +738,7 @@ const FightStats: React.FC<FightStatsProps> = ({ fightStats }) => {
           </Paper>
         </Grid>
 
-        {/* Fight Momentum Chart */}
-        <Grid item xs={12}>
-          <Paper sx={cardStyle}>
-            <Box className="glow-effect" sx={glowEffect} />
-            <Typography variant="h6" sx={{ color: '#fff', mb: 3 }}>
-              Fight Momentum
-            </Typography>
-            <Box sx={{ height: 400 }}>
-              <ResponsiveContainer>
-                <BarChart
-                  data={calculateMomentum()}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-                  <XAxis 
-                    dataKey="round" 
-                    stroke="rgba(255, 255, 255, 0.7)"
-                    tick={{ fill: 'rgba(255, 255, 255, 0.7)' }}
-                  />
-                  <YAxis 
-                    stroke="rgba(255, 255, 255, 0.7)"
-                    tick={{ fill: 'rgba(255, 255, 255, 0.7)' }}
-                  />
-                  <Legend />
-                  <Bar 
-                    dataKey={fightStats.fighterAName} 
-                    fill="#00F0FF" 
-                    opacity={0.8}
-                  />
-                  <Bar 
-                    dataKey={fightStats.fighterBName} 
-                    fill="#FF3864" 
-                    opacity={0.8}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </Box>
-          </Paper>
-        </Grid>
+
 
         {/* Fighter Stats Cards */}
         <Grid item xs={12} md={6}>
