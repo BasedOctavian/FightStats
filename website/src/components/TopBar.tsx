@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   AppBar,
   Toolbar,
@@ -16,10 +17,12 @@ import {
   Event as EventsIcon,
   FitnessCenter as GymsIcon,
   Info as AboutIcon,
+  BarChart as VisualizeIcon,
 } from '@mui/icons-material';
 
 const TopBar: React.FC = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
 
   return (
     <AppBar 
@@ -47,6 +50,7 @@ const TopBar: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
           {/* Logo */}
           <Button
+            onClick={() => navigate('/')}
             sx={{
               p: 0,
               minWidth: 'auto',
@@ -74,6 +78,7 @@ const TopBar: React.FC = () => {
           }}>
             <Button
               startIcon={<FightersIcon />}
+              onClick={() => navigate('/fighters')}
               sx={{
                 color: 'rgba(255, 255, 255, 0.7)',
                 fontWeight: 700,
@@ -96,6 +101,7 @@ const TopBar: React.FC = () => {
             </Button>
             <Button
               startIcon={<EventsIcon />}
+              onClick={() => navigate('/events')}
               sx={{
                 color: 'rgba(255, 255, 255, 0.7)',
                 fontWeight: 700,
@@ -159,6 +165,29 @@ const TopBar: React.FC = () => {
               }}
             >
               About
+            </Button>
+            <Button
+              startIcon={<VisualizeIcon />}
+              onClick={() => navigate('/visualize')}
+              sx={{
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontWeight: 700,
+                px: 2.5,
+                py: 1.5,
+                borderRadius: '8px',
+                textTransform: 'uppercase',
+                fontSize: '0.85rem',
+                letterSpacing: '0.05em',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  color: '#00F0FF',
+                  bgcolor: 'rgba(0, 240, 255, 0.15)',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(0, 240, 255, 0.2)',
+                },
+              }}
+            >
+              Visualize
             </Button>
           </Box>
         </Box>

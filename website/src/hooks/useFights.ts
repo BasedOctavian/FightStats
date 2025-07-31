@@ -9,7 +9,8 @@ import {
   orderBy,
   DocumentData,
   QueryDocumentSnapshot,
-  limit,
+  Timestamp,
+  limit
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Fight, COLLECTIONS } from '../types/firestore';
@@ -41,6 +42,8 @@ export const useFight = (fightCode: string | null) => {
           setFight({
             ...fightData,
             id: fightSnapshot.id,
+            createdAt: fightData.createdAt instanceof Timestamp ? fightData.createdAt.toDate() : fightData.createdAt,
+            updatedAt: fightData.updatedAt instanceof Timestamp ? fightData.updatedAt.toDate() : fightData.updatedAt,
           } as Fight);
         } else {
           setFight(null);
@@ -61,12 +64,15 @@ export const useFight = (fightCode: string | null) => {
   return { fight, loading, error };
 };
 
-// Hook to fetch all fights with optional filters
+// Hook to fetch all fights
 export const useAllFights = (options?: {
+  eventCode?: string;
+  fighterA?: string;
+  fighterB?: string;
   weightClass?: string;
-  isTitleFight?: 'Yes' | 'No';
-  gender?: 'Male' | 'Female';
-  methodOfFinish?: 'KO' | 'TKO' | 'SUB' | 'DEC' | 'DQ' | 'NC';
+  methodOfFinish?: string;
+  sortBy?: 'date' | 'eventCode' | 'weightClass';
+  sortOrder?: 'asc' | 'desc';
 }) => {
   const [fights, setFights] = useState<Fight[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -78,30 +84,50 @@ export const useAllFights = (options?: {
       setError(null);
 
       try {
+        console.log('Fetching fights from collection:', COLLECTIONS.FIGHTS);
         let fightsQuery = collection(db, COLLECTIONS.FIGHTS);
+
+        // Build query with filters
         const constraints = [];
 
-        // Apply filters
+        // Filter by event code if specified
+        if (options?.eventCode) {
+          constraints.push(where('eventCode', '==', options.eventCode));
+        }
+
+        // Filter by fighter A if specified
+        if (options?.fighterA) {
+          constraints.push(where('fighterA', '==', options.fighterA));
+        }
+
+        // Filter by fighter B if specified
+        if (options?.fighterB) {
+          constraints.push(where('fighterB', '==', options.fighterB));
+        }
+
+        // Filter by weight class if specified
         if (options?.weightClass) {
           constraints.push(where('weightClass', '==', options.weightClass));
         }
-        if (options?.isTitleFight) {
-          constraints.push(where('isTitleFight', '==', options.isTitleFight));
-        }
-        if (options?.gender) {
-          constraints.push(where('gender', '==', options.gender));
-        }
+
+        // Filter by method of finish if specified
         if (options?.methodOfFinish) {
           constraints.push(where('methodOfFinish', '==', options.methodOfFinish));
         }
 
-        // Default sort by eventCode descending to get newest fights first
-        constraints.push(orderBy('eventCode', 'desc'));
+        // Add sorting
+        if (options?.sortBy) {
+          constraints.push(orderBy(options.sortBy, options.sortOrder || 'asc'));
+        }
+
+        console.log('Query constraints:', constraints);
 
         // Execute query
         const querySnapshot = await getDocs(
           constraints.length > 0 ? query(fightsQuery, ...constraints) : fightsQuery
         );
+
+        console.log('Query snapshot size:', querySnapshot.size);
 
         const fightsData: Fight[] = [];
         querySnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
@@ -109,6 +135,8 @@ export const useAllFights = (options?: {
           fightsData.push({
             ...data,
             id: doc.id,
+            createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
+            updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
           } as Fight);
         });
 
@@ -123,17 +151,66 @@ export const useAllFights = (options?: {
     };
 
     fetchFights();
-  }, [
-    options?.weightClass,
-    options?.isTitleFight,
-    options?.gender,
-    options?.methodOfFinish
-  ]);
+  }, [options?.eventCode, options?.fighterA, options?.fighterB, options?.weightClass, options?.methodOfFinish, options?.sortBy, options?.sortOrder]);
 
   return { fights, loading, error };
 };
 
-// Hook to fetch all fights for a specific fighter
+// Hook to fetch fights by multiple fight codes
+export const useFightsByIds = (fightCodes: string[]) => {
+  const [fights, setFights] = useState<Fight[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchFights = async () => {
+      if (!fightCodes.length) {
+        setFights([]);
+        setLoading(false);
+        setError(null);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Create a query to get all fights where fightCode is in the provided array
+        const fightsQuery = query(
+          collection(db, COLLECTIONS.FIGHTS),
+          where('fightCode', 'in', fightCodes)
+        );
+
+        const querySnapshot = await getDocs(fightsQuery);
+        const fightsData: Fight[] = [];
+
+        querySnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
+          const fightData = doc.data();
+          fightsData.push({
+            ...fightData,
+            id: doc.id,
+            createdAt: fightData.createdAt instanceof Timestamp ? fightData.createdAt.toDate() : fightData.createdAt,
+            updatedAt: fightData.updatedAt instanceof Timestamp ? fightData.updatedAt.toDate() : fightData.updatedAt,
+          } as Fight);
+        });
+
+        setFights(fightsData);
+      } catch (err) {
+        console.error('Error fetching fights by codes:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch fights');
+        setFights([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFights();
+  }, [fightCodes.join(',')]); // Use join to create a stable dependency
+
+  return { fights, loading, error };
+};
+
+// Hook to fetch fights for a specific fighter
 export const useFighterFights = (fighterCode: string | null) => {
   const [fights, setFights] = useState<Fight[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -152,49 +229,52 @@ export const useFighterFights = (fighterCode: string | null) => {
       setError(null);
 
       try {
-        // Query fights where the fighter is either fighterA or fighterB
-        const fighterAQuery = query(
+        // Create a query to get all fights where the fighter is either fighterA or fighterB
+        const fightsQuery = query(
           collection(db, COLLECTIONS.FIGHTS),
-          where('fighterA', '==', fighterCode),
-          orderBy('eventCode', 'desc')
+          where('fighterA', '==', fighterCode)
         );
 
-        const fighterBQuery = query(
+        const fightsQuery2 = query(
           collection(db, COLLECTIONS.FIGHTS),
-          where('fighterB', '==', fighterCode),
-          orderBy('eventCode', 'desc')
+          where('fighterB', '==', fighterCode)
         );
 
-        // Execute both queries in parallel
-        const [fighterASnapshot, fighterBSnapshot] = await Promise.all([
-          getDocs(fighterAQuery),
-          getDocs(fighterBQuery)
+        const [snapshot1, snapshot2] = await Promise.all([
+          getDocs(fightsQuery),
+          getDocs(fightsQuery2)
         ]);
 
         const fightsData: Fight[] = [];
 
-        // Process fights where the fighter is fighterA
-        fighterASnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
-          const data = doc.data();
+        // Process first query results
+        snapshot1.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
+          const fightData = doc.data();
           fightsData.push({
-            ...data,
+            ...fightData,
             id: doc.id,
+            createdAt: fightData.createdAt instanceof Timestamp ? fightData.createdAt.toDate() : fightData.createdAt,
+            updatedAt: fightData.updatedAt instanceof Timestamp ? fightData.updatedAt.toDate() : fightData.updatedAt,
           } as Fight);
         });
 
-        // Process fights where the fighter is fighterB
-        fighterBSnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
-          const data = doc.data();
+        // Process second query results
+        snapshot2.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
+          const fightData = doc.data();
           fightsData.push({
-            ...data,
+            ...fightData,
             id: doc.id,
+            createdAt: fightData.createdAt instanceof Timestamp ? fightData.createdAt.toDate() : fightData.createdAt,
+            updatedAt: fightData.updatedAt instanceof Timestamp ? fightData.updatedAt.toDate() : fightData.updatedAt,
           } as Fight);
         });
 
-        // Sort all fights by eventCode descending (newest first)
-        fightsData.sort((a, b) => b.eventCode.localeCompare(a.eventCode));
+        // Remove duplicates and sort by date if available
+        const uniqueFights = fightsData.filter((fight, index, self) => 
+          index === self.findIndex(f => f.id === fight.id)
+        );
 
-        setFights(fightsData);
+        setFights(uniqueFights);
       } catch (err) {
         console.error('Error fetching fighter fights:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch fighter fights');

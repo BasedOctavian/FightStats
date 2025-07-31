@@ -23,6 +23,7 @@ import {
   Assessment as StatsIcon,
   Info as InfoIcon,
 } from '@mui/icons-material';
+import LoadingScreen from '../../components/common/LoadingScreen';
 import { useFightByFightCode } from '../../hooks/useFights';
 import { useFightersByIds, useFighterByCode } from '../../hooks/useFighters';
 import { useEvents } from '../../hooks/useEvents';
@@ -81,28 +82,34 @@ interface TabPanelProps {
 const TabPanel = (props: TabPanelProps) => {
   const { children, value, index, ...other } = props;
 
-      return (
-      <Fade in={value === index} timeout={400}>
-        <div
-          role="tabpanel"
-          hidden={value !== index}
-          id={`fight-tabpanel-${index}`}
-          aria-labelledby={`fight-tab-${index}`}
-          {...other}
-          style={{ display: value === index ? 'block' : 'none' }}
-        >
-          <div>
-            {value === index && children}
-          </div>
-        </div>
-      </Fade>
-    );
+  return (
+    <Fade in={value === index} timeout={600} easing="cubic-bezier(0.4, 0, 0.2, 1)">
+      <div
+        role="tabpanel"
+        hidden={value !== index}
+        id={`fight-tabpanel-${index}`}
+        aria-labelledby={`fight-tab-${index}`}
+        {...other}
+        style={{ 
+          display: value === index ? 'block' : 'none',
+          animation: value === index ? 'fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'
+        }}
+      >
+        {value === index && children}
+      </div>
+    </Fade>
+  );
 };
 
 const FightDetailPage: React.FC = (): JSX.Element => {
   const { encodedFightCode } = useParams<{ encodedFightCode: string }>();
   const navigate = useNavigate();
   const [tabValue, setTabValue] = useState(0);
+  const [showLoading, setShowLoading] = useState(true);
+  const loadingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const hasInitiallyLoaded = React.useRef(false);
+  const minLoadingTimeRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -157,9 +164,109 @@ const FightDetailPage: React.FC = (): JSX.Element => {
 
   const { weightClass: weightClassData, loading: weightClassLoading, error: weightClassError } = useWeightClass(weightClassName);
 
+  // Reset loading state when fight code changes
+  useEffect(() => {
+    setTabValue(0);
+    setShowLoading(true);
+    setMinTimeElapsed(false);
+    hasInitiallyLoaded.current = false;
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = null;
+    }
+    if (minLoadingTimeRef.current) {
+      clearTimeout(minLoadingTimeRef.current);
+      minLoadingTimeRef.current = null;
+    }
+  }, [encodedFightCode]);
+
   const handleBackClick = () => {
     navigate(-1);
   };
+
+  // Debounced loading logic to prevent stuttering
+  const isLoading = fightLoading || statsLoading || loadingFighterA || loadingFighterB || fightersLoading || eventLoading || weightClassLoading;
+  
+  React.useEffect(() => {
+    // Set minimum loading time of 1 second
+    if (!minLoadingTimeRef.current) {
+      minLoadingTimeRef.current = setTimeout(() => {
+        setMinTimeElapsed(true);
+        minLoadingTimeRef.current = null;
+      }, 1000);
+    }
+
+    // Hide loading only after minimum time AND data is loaded
+    if (!isLoading && showLoading && minTimeElapsed) {
+      setShowLoading(false);
+      hasInitiallyLoaded.current = true;
+    }
+    
+    return () => {
+      if (minLoadingTimeRef.current) {
+        clearTimeout(minLoadingTimeRef.current);
+        minLoadingTimeRef.current = null;
+      }
+    };
+  }, [isLoading, showLoading, minTimeElapsed]);
+  
+  if (showLoading) {
+    return <LoadingScreen key={`loading-${encodedFightCode}`} message="Loading Fight Data..." showProgress={true} />;
+  }
+
+  const error = fightError || statsError || fightersError || eventError || weightClassError;
+
+  if (error || !fight) {
+    return (
+      <Box sx={{ 
+        minHeight: '100vh', 
+        bgcolor: '#0A0E17',
+        background: 'linear-gradient(135deg, #0A0E17 0%, #1A1F2E 100%)',
+      }}>
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+          <Box sx={{ 
+            textAlign: 'center',
+            p: 4,
+            bgcolor: 'rgba(0, 240, 255, 0.05)',
+            borderRadius: '12px',
+            border: '1px solid rgba(0, 240, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+          }}>
+            <Typography variant="h4" sx={{ 
+              color: '#00F0FF',
+              mb: 2,
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              fontWeight: 600,
+            }}>
+              Fight Not Found
+            </Typography>
+            <Typography variant="body1" sx={{ 
+              color: 'rgba(255, 255, 255, 0.7)',
+              mb: 4 
+            }}>
+              {error || 'The requested fight could not be found.'}
+            </Typography>
+            <Button
+              variant="outlined"
+              startIcon={<ArrowBackIcon />}
+              onClick={handleBackClick}
+              sx={{ 
+                color: '#00F0FF',
+                borderColor: '#00F0FF',
+                '&:hover': {
+                  borderColor: '#00F0FF',
+                  bgcolor: 'rgba(0, 240, 255, 0.1)',
+                }
+              }}
+            >
+              Back to Previous Page
+            </Button>
+          </Box>
+        </Container>
+      </Box>
+    );
+  }
 
   const renderStatItem = (label: string, value: string | number) => (
     <Box sx={{ 
@@ -181,9 +288,6 @@ const FightDetailPage: React.FC = (): JSX.Element => {
     </Box>
   );
 
-  const isLoading = fightLoading || fightersLoading || eventLoading || weightClassLoading;
-  const error = fightError || fightersError || eventError || weightClassError;
-
   // Get fighter names and event data
   const fighterAData = fighters.find(f => f.fighterCode === fight?.fighterA);
   const fighterBData = fighters.find(f => f.fighterCode === fight?.fighterB);
@@ -204,22 +308,25 @@ const FightDetailPage: React.FC = (): JSX.Element => {
         display: 'flex', 
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 2,
-        flex: 1,
+        justifyContent: 'center',
+        gap: 2.5,
+        height: '100%',
+        minHeight: 160,
       }}>
         {/* Fighter Image */}
         {fighter.Image && (
           <Box
             className="fighter-image"
             sx={{
-              width: 120,
-              height: 120,
-              borderRadius: '12px',
+              width: 140,
+              height: 140,
+              borderRadius: '16px',
               overflow: 'hidden',
               border: '2px solid rgba(0, 240, 255, 0.3)',
-              boxShadow: '0 0 20px rgba(0, 240, 255, 0.1)',
+              boxShadow: '0 0 25px rgba(0, 240, 255, 0.15)',
               position: 'relative',
               transition: 'all 0.3s ease',
+              flexShrink: 0,
               '&::after': {
                 content: '""',
                 position: 'absolute',
@@ -227,7 +334,7 @@ const FightDetailPage: React.FC = (): JSX.Element => {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                boxShadow: 'inset 0 0 20px rgba(0, 240, 255, 0.2)',
+                boxShadow: 'inset 0 0 25px rgba(0, 240, 255, 0.2)',
                 pointerEvents: 'none',
               }
             }}
@@ -245,7 +352,15 @@ const FightDetailPage: React.FC = (): JSX.Element => {
         )}
         
         {/* Fighter Name and Nickname */}
-        <Box sx={{ textAlign: 'center' }}>
+        <Box sx={{ 
+          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 0.5,
+          minHeight: 60,
+          justifyContent: 'center',
+        }}>
           <Typography 
             className="fighter-name"
             variant="h5" 
@@ -255,8 +370,11 @@ const FightDetailPage: React.FC = (): JSX.Element => {
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
               textShadow: '0 0 20px rgba(0, 240, 255, 0.3)',
-              mb: 0.5,
               transition: 'all 0.3s ease',
+              fontSize: { xs: '1.1rem', sm: '1.25rem', md: '1.5rem' },
+              lineHeight: 1.2,
+              wordBreak: 'break-word',
+              hyphens: 'auto',
             }}
           >
             {fighter.fighterName || fighter.name}
@@ -268,96 +386,36 @@ const FightDetailPage: React.FC = (): JSX.Element => {
                 color: 'rgba(0, 240, 255, 0.8)',
                 fontStyle: 'italic',
                 fontWeight: 500,
-                mb: 1,
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                lineHeight: 1.2,
+                wordBreak: 'break-word',
+                hyphens: 'auto',
+                maxWidth: '100%',
               }}
             >
               "{fighter.nickname}"
             </Typography>
           )}
         </Box>
-
-                 
-
-        
       </Box>
     );
   };
 
   const renderContent = () => {
-    if (isLoading || statsLoading) {
-      return (
-        <Box sx={{ 
-          minHeight: '60vh', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          flexDirection: 'column',
-          gap: 2,
-        }}>
-          <Box sx={{ position: 'relative' }}>
-            <CircularProgress 
-              size={80} 
-              sx={{ 
-                color: '#00F0FF',
-                opacity: 0.3,
-              }} 
-            />
-            <CircularProgress 
-              size={60} 
-              sx={{ 
-                color: '#00F0FF',
-                position: 'absolute',
-                left: '10px',
-                top: '10px',
-              }} 
-            />
-          </Box>
-          <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-            Loading fight details...
-          </Typography>
-        </Box>
-      );
-    }
-
-    if (error || statsError) {
-      return (
-        <Box sx={{ 
-          p: 4, 
-          bgcolor: 'rgba(255, 0, 0, 0.1)', 
-          borderRadius: '12px',
-          border: '1px solid rgba(255, 0, 0, 0.2)',
-        }}>
-          <Typography sx={{ color: '#FF0000' }}>
-            Error: {error || statsError}
-          </Typography>
-        </Box>
-      );
-    }
-
-    if (!fight) {
-      return (
-        <Box sx={{ 
-          p: 4, 
-          bgcolor: 'rgba(0, 240, 255, 0.05)',
-          borderRadius: '12px',
-          border: '1px solid rgba(0, 240, 255, 0.1)',
-        }}>
-          <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-            No fight data available
-          </Typography>
-        </Box>
-      );
-    }
-
     return (
-      <Fade in timeout={400}>
+      <Fade in timeout={800}>
         <Box>
-          <Box sx={cardStyle}>
+          {/* Main Fight Card */}
+          <Box sx={{
+            ...cardStyle,
+            animation: 'slideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both',
+          }}>
             <Box className="glow-effect" sx={glowEffect} />
-            {/* Fighter Names */}
+            
+            {/* Fighter Names Section */}
             <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
+              display: 'grid', 
+              gridTemplateColumns: '1fr auto 1fr',
               alignItems: 'center', 
               gap: 4,
               mb: 4,
@@ -366,61 +424,79 @@ const FightDetailPage: React.FC = (): JSX.Element => {
               borderRadius: '16px',
               border: '1px solid rgba(0, 240, 255, 0.1)',
               backdropFilter: 'blur(10px)',
+              animation: 'fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both',
+              minHeight: 200,
             }}>
               {/* Fighter A */}
-              {fighterAData?.id ? (
-                <Link
-                  component={RouterLink}
-                  to={`/fighter/${fighterAData.id}`}
-                  sx={{
-                    textDecoration: 'none',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      '& .fighter-image': {
-                        border: '2px solid rgba(0, 240, 255, 0.5)',
-                        boxShadow: '0 0 30px rgba(0, 240, 255, 0.2)',
-                      },
-                      '& .fighter-name': {
-                        color: '#00F0FF',
-                        textShadow: '0 0 20px rgba(0, 240, 255, 0.5)',
-                      }
-                    }
-                  }}
-                >
-                  {renderFighterHeader(fighterAData, true)}
-                </Link>
-              ) : (
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 2,
-                  flex: 1,
-                }}>
-                  <Typography 
-                    variant="h5" 
-                    sx={{ 
-                      color: '#fff',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      textShadow: '0 0 20px rgba(0, 240, 255, 0.3)',
-                    }}
-                  >
-                    {fight.fighterA}
-                  </Typography>
-                </Box>
-              )}
-
-              {/* VS */}
               <Box sx={{ 
                 display: 'flex', 
                 flexDirection: 'column',
                 alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+              }}>
+                {fighterAData?.id ? (
+                  <Link
+                    component={RouterLink}
+                    to={`/fighter/${fighterAData.id}`}
+                    sx={{
+                      textDecoration: 'none',
+                      transition: 'all 0.3s ease',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      height: '100%',
+                      justifyContent: 'center',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        '& .fighter-image': {
+                          border: '2px solid rgba(0, 240, 255, 0.5)',
+                          boxShadow: '0 0 30px rgba(0, 240, 255, 0.2)',
+                        },
+                        '& .fighter-name': {
+                          color: '#00F0FF',
+                          textShadow: '0 0 20px rgba(0, 240, 255, 0.5)',
+                        }
+                      }
+                    }}
+                  >
+                    {renderFighterHeader(fighterAData, true)}
+                  </Link>
+                ) : (
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                  }}>
+                    <Typography 
+                      variant="h5" 
+                      sx={{ 
+                        color: '#fff',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        textShadow: '0 0 20px rgba(0, 240, 255, 0.3)',
+                      }}
+                    >
+                      {fight.fighterA}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+
+              {/* VS - Centered */}
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
                 gap: 1,
-                px: 3,
+                px: 4,
+                py: 2,
                 position: 'relative',
+                height: '100%',
                 '&::before': {
                   content: '""',
                   position: 'absolute',
@@ -429,18 +505,30 @@ const FightDetailPage: React.FC = (): JSX.Element => {
                   right: '-2px',
                   height: '1px',
                   background: 'linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.3), transparent)',
+                },
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  bottom: 0,
+                  left: '50%',
+                  width: '1px',
+                  background: 'linear-gradient(180deg, transparent, rgba(0, 240, 255, 0.3), transparent)',
                 }
               }}>
                 <Typography 
-                  variant="h3" 
+                  variant="h2" 
                   sx={{ 
-                    color: 'rgba(0, 240, 255, 0.8)',
-                    fontWeight: 700,
-                    letterSpacing: '0.1em',
+                    color: 'rgba(0, 240, 255, 0.9)',
+                    fontWeight: 800,
+                    letterSpacing: '0.15em',
                     userSelect: 'none',
                     textTransform: 'uppercase',
-                    textShadow: '0 0 20px rgba(0, 240, 255, 0.5)',
+                    textShadow: '0 0 30px rgba(0, 240, 255, 0.6)',
                     zIndex: 1,
+                    fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
+                    lineHeight: 1,
+                    mb: 1,
                   }}
                 >
                   VS
@@ -448,12 +536,14 @@ const FightDetailPage: React.FC = (): JSX.Element => {
                 <Typography 
                   variant="caption" 
                   sx={{ 
-                    color: 'rgba(255, 255, 255, 0.5)',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
                     letterSpacing: '0.1em',
                     textTransform: 'uppercase',
                     zIndex: 1,
+                    textAlign: 'center',
+                    lineHeight: 1.2,
                   }}
                 >
                   {fight.weightClass} • {fight.gender}
@@ -461,50 +551,63 @@ const FightDetailPage: React.FC = (): JSX.Element => {
               </Box>
 
               {/* Fighter B */}
-              {fighterBData?.id ? (
-                <Link
-                  component={RouterLink}
-                  to={`/fighter/${fighterBData.id}`}
-                  sx={{
-                    textDecoration: 'none',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      '& .fighter-image': {
-                        border: '2px solid rgba(0, 240, 255, 0.5)',
-                        boxShadow: '0 0 30px rgba(0, 240, 255, 0.2)',
-                      },
-                      '& .fighter-name': {
-                        color: '#00F0FF',
-                        textShadow: '0 0 20px rgba(0, 240, 255, 0.5)',
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+              }}>
+                {fighterBData?.id ? (
+                  <Link
+                    component={RouterLink}
+                    to={`/fighter/${fighterBData.id}`}
+                    sx={{
+                      textDecoration: 'none',
+                      transition: 'all 0.3s ease',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      height: '100%',
+                      justifyContent: 'center',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        '& .fighter-image': {
+                          border: '2px solid rgba(0, 240, 255, 0.5)',
+                          boxShadow: '0 0 30px rgba(0, 240, 255, 0.2)',
+                        },
+                        '& .fighter-name': {
+                          color: '#00F0FF',
+                          textShadow: '0 0 20px rgba(0, 240, 255, 0.5)',
+                        }
                       }
-                    }
-                  }}
-                >
-                  {renderFighterHeader(fighterBData, false)}
-                </Link>
-              ) : (
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 2,
-                  flex: 1,
-                }}>
-                  <Typography 
-                    variant="h5" 
-                    sx={{ 
-                      color: '#fff',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      textShadow: '0 0 20px rgba(0, 240, 255, 0.3)',
                     }}
                   >
-                    {fight.fighterB}
-                  </Typography>
-                </Box>
-              )}
+                    {renderFighterHeader(fighterBData, false)}
+                  </Link>
+                ) : (
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                  }}>
+                    <Typography 
+                      variant="h5" 
+                      sx={{ 
+                        color: '#fff',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        textShadow: '0 0 20px rgba(0, 240, 255, 0.3)',
+                      }}
+                    >
+                      {fight.fighterB}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
             </Box>
 
             {/* Fight Info Section */}
@@ -515,6 +618,7 @@ const FightDetailPage: React.FC = (): JSX.Element => {
               gap: 4,
               mb: 4,
               position: 'relative',
+              animation: 'fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.6s both',
               '&::before': {
                 content: '""',
                 position: 'absolute',
@@ -533,6 +637,7 @@ const FightDetailPage: React.FC = (): JSX.Element => {
                 gap: 2,
                 flexWrap: 'wrap',
                 zIndex: 1,
+                animation: 'slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.8s both',
               }}>
                 <Chip 
                   label={fight.weightClass}
@@ -608,8 +713,13 @@ const FightDetailPage: React.FC = (): JSX.Element => {
                 )}
               </Box>
 
-                             {/* Fight Stats Grid */}
-               <Grid container spacing={2} sx={{ maxWidth: '1000px', margin: '0 auto', zIndex: 1 }}>
+                                                           {/* Fight Stats Grid */}
+                <Grid container spacing={2} sx={{ 
+                  maxWidth: '1000px', 
+                  margin: '0 auto', 
+                  zIndex: 1,
+                  animation: 'fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 1.0s both',
+                }}>
                  {[
                    { 
                      label: 'Method of Finish',
@@ -628,47 +738,48 @@ const FightDetailPage: React.FC = (): JSX.Element => {
                      icon: <StatsIcon sx={{ fontSize: 24, color: 'rgba(0, 240, 255, 0.7)' }} />
                    }
                  ].map((stat, index) => (
-                                     <Grid item xs={12} sm={6} md={4} key={index}>
-                                         <Box sx={{ 
-                       display: 'flex', 
-                       flexDirection: 'column',
-                       alignItems: 'center',
-                       justifyContent: 'center',
-                       gap: 1.5,
-                       p: 2.5,
-                       minHeight: 160,
-                       height: '100%',
-                       bgcolor: 'rgba(0, 240, 255, 0.03)',
-                       borderRadius: '12px',
-                       border: '1px solid rgba(0, 240, 255, 0.08)',
-                       transition: 'all 0.3s ease',
-                       position: 'relative',
-                       overflow: 'hidden',
-                       backdropFilter: 'blur(8px)',
-                      '&:hover': {
-                        bgcolor: 'rgba(0, 240, 255, 0.05)',
-                        border: '1px solid rgba(0, 240, 255, 0.15)',
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 8px 24px rgba(0, 240, 255, 0.1)',
-                        '& .stat-icon': {
-                          transform: 'scale(1.1)',
-                          color: 'rgba(0, 240, 255, 0.9)',
-                        },
-                        '& .stat-value': {
-                          color: '#fff',
-                          textShadow: '0 0 12px rgba(0, 240, 255, 0.5)',
-                        }
-                      },
-                      '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: '2px',
-                        background: 'linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.2), transparent)',
-                      }
-                    }}>
+                                                                           <Grid item xs={12} sm={6} md={4} key={index}>
+                                          <Box sx={{ 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 1.5,
+                        p: 2.5,
+                        minHeight: 160,
+                        height: '100%',
+                        bgcolor: 'rgba(0, 240, 255, 0.03)',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(0, 240, 255, 0.08)',
+                        transition: 'all 0.3s ease',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        backdropFilter: 'blur(8px)',
+                        animation: `slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) ${1.2 + (index * 0.1)}s both`,
+                       '&:hover': {
+                         bgcolor: 'rgba(0, 240, 255, 0.05)',
+                         border: '1px solid rgba(0, 240, 255, 0.15)',
+                         transform: 'translateY(-2px)',
+                         boxShadow: '0 8px 24px rgba(0, 240, 255, 0.1)',
+                         '& .stat-icon': {
+                           transform: 'scale(1.1)',
+                           color: 'rgba(0, 240, 255, 0.9)',
+                         },
+                         '& .stat-value': {
+                           color: '#fff',
+                           textShadow: '0 0 12px rgba(0, 240, 255, 0.5)',
+                         }
+                       },
+                       '&::before': {
+                         content: '""',
+                         position: 'absolute',
+                         top: 0,
+                         left: 0,
+                         right: 0,
+                         height: '2px',
+                         background: 'linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.2), transparent)',
+                       }
+                     }}>
                       <Box className="stat-icon" sx={{ 
                         transition: 'all 0.3s ease',
                         mb: 1
@@ -733,6 +844,7 @@ const FightDetailPage: React.FC = (): JSX.Element => {
                 border: '1px solid rgba(0, 240, 255, 0.08)',
                 backdropFilter: 'blur(8px)',
                 transition: 'all 0.3s ease',
+                animation: 'fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 1.6s both',
                 '&:hover': {
                   bgcolor: 'rgba(0, 240, 255, 0.05)',
                   border: '1px solid rgba(0, 240, 255, 0.15)',
@@ -803,7 +915,10 @@ const FightDetailPage: React.FC = (): JSX.Element => {
           </Box>
 
           {/* Statistics Section */}
-          <Box sx={{ mt: 6 }}>
+          <Box sx={{ 
+            mt: 6,
+            animation: 'fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 1.8s both',
+          }}>
             <Typography 
               variant="h4" 
               sx={{ 
@@ -813,6 +928,7 @@ const FightDetailPage: React.FC = (): JSX.Element => {
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
                 textShadow: '0 0 20px rgba(0, 240, 255, 0.3)',
+                animation: 'slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) 2.0s both',
               }}
             >
               Fight Analysis
@@ -823,6 +939,7 @@ const FightDetailPage: React.FC = (): JSX.Element => {
               borderBottom: '1px solid rgba(0, 240, 255, 0.2)',
               mb: 4,
               position: 'relative',
+              animation: 'slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) 2.2s both',
               '&::after': {
                 content: '""',
                 position: 'absolute',
@@ -870,27 +987,37 @@ const FightDetailPage: React.FC = (): JSX.Element => {
                   iconPosition="start" 
                   label="Fight Stats" 
                   {...a11yProps(0)}
-                  sx={{ gap: 1 }}
+                  sx={{ 
+                    gap: 1,
+                    animation: 'slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) 2.4s both',
+                  }}
                 />
                 <Tab 
                   icon={<InfoIcon />} 
                   iconPosition="start" 
                   label={fighterAData?.fighterName || fight.fighterA} 
                   {...a11yProps(1)}
-                  sx={{ gap: 1 }}
+                  sx={{ 
+                    gap: 1,
+                    animation: 'slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) 2.6s both',
+                  }}
                 />
                 <Tab 
                   icon={<InfoIcon />} 
                   iconPosition="start" 
                   label={fighterBData?.fighterName || fight.fighterB} 
                   {...a11yProps(2)}
-                  sx={{ gap: 1 }}
+                  sx={{ 
+                    gap: 1,
+                    animation: 'slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) 2.8s both',
+                  }}
                 />
               </Tabs>
             </Box>
 
             {/* Tab Panels */}
-            <TabPanel value={tabValue} index={0}>
+            <Box sx={{ animation: 'fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 3.0s both' }}>
+              <TabPanel value={tabValue} index={0}>
               {fightStats && (
                 <FightStats 
                   fightStats={{
@@ -966,6 +1093,7 @@ const FightDetailPage: React.FC = (): JSX.Element => {
                 />
               )}
             </TabPanel>
+            </Box>
           </Box>
         </Box>
       </Fade>

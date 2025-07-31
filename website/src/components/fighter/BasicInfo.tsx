@@ -1,19 +1,21 @@
 import React from 'react';
-import { Paper, Typography, Grid, Box, CircularProgress, Tooltip } from '@mui/material';
+import { Paper, Typography, Grid, Box, CircularProgress, Tooltip, Fade } from '@mui/material';
 import { Fighter } from '../../types/firestore';
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { useBasicInfo } from '../../hooks/stats/useBasicInfo';
 import { useFighterFights } from '../../hooks/useFights';
 import { useFightersByIds } from '../../hooks/useFighters';
 import { useFighterCombinedDifficultyScore } from '../../hooks/useDifficultyScore';
-import LoadingScreen from '../common/LoadingScreen';
+
 
 interface BasicInfoProps {
   fighter: Fighter;
   weightClassAvgData?: any; // Renamed from weightClassData
+  fights?: any[];
+  opponents?: Fighter[];
 }
 
-const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): JSX.Element => {
+const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, fights: passedFights, opponents: passedOpponents }): JSX.Element => {
   // Use the hook to get all calculated data
   const {
     hasPositionalData,
@@ -46,8 +48,12 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
   const weightClassStrikesPerMinute = calculateWeightClassStrikesPerMinute();
   const overallRating = calculateOverallRating();
 
-  // Get fighter's fights and opponents for resume rating calculation
-  const { fights, loading: fightsLoading } = useFighterFights(fighter.fighterCode);
+  // Use passed fights and opponents if available, otherwise fetch them
+  const { fights: fetchedFights, loading: fightsLoading } = useFighterFights(
+    passedFights ? null : fighter.fighterCode
+  );
+  
+  const fights = passedFights || fetchedFights;
   
   // Get unique opponent codes from fights
   const opponentCodes = React.useMemo(() => {
@@ -58,8 +64,12 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
     return Array.from(opponentSet);
   }, [fights, fighter.fighterCode]);
 
-  // Fetch all opponent data
-  const { fighters: opponents, loading: opponentsLoading } = useFightersByIds(opponentCodes);
+  // Fetch all opponent data only if not passed as props
+  const { fighters: fetchedOpponents, loading: opponentsLoading } = useFightersByIds(
+    passedOpponents ? [] : opponentCodes
+  );
+  
+  const opponents = passedOpponents || fetchedOpponents;
 
   // Calculate combined difficulty score for the fighter (resume rating)
   const resumeRating = useFighterCombinedDifficultyScore({
@@ -71,7 +81,10 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
 
   // Calculate adjusted rating that combines overall (80%) and resume (20%)
   const adjustedRating = React.useMemo(() => {
-    if (fightsLoading || opponentsLoading || !resumeRating.averageScore) {
+    // If fights/opponents are passed as props, we don't need to wait for loading
+    const shouldWaitForLoading = !passedFights || !passedOpponents;
+    
+    if ((shouldWaitForLoading && (fightsLoading || opponentsLoading)) || !resumeRating.averageScore) {
       return {
         ...overallRating,
         originalRating: overallRating.rating,
@@ -95,8 +108,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
     };
   }, [overallRating, resumeRating.averageScore, fightsLoading, opponentsLoading]);
 
-  // Determine if we're still loading
-  const isLoading = fightsLoading || opponentsLoading || !resumeRating.averageScore;
+
 
   // Enhanced Rating Card Stylesheet (matching Strike Distribution Analysis)
   const ratingCardStyles = {
@@ -1085,9 +1097,10 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
     </Grid>
   );
 
-  // Show loading screen while data is being fetched
-  if (isLoading) {
-    return (
+
+
+  return (
+    <Fade in={true} timeout={800}>
       <Paper 
         elevation={0} 
         sx={{ 
@@ -1109,38 +1122,6 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
           }
         }}
       >
-        <LoadingScreen 
-          message="Calculating fighter analytics..." 
-          size="large"
-          showLogo={true}
-          fullScreen={false}
-        />
-      </Paper>
-    );
-  }
-
-  return (
-    <Paper 
-      elevation={0} 
-      sx={{ 
-        p: { xs: 2, sm: 3, md: 4 },
-        mb: 3,
-        bgcolor: 'transparent',
-        borderRadius: '12px',
-        position: 'relative',
-        overflow: 'hidden',
-        border: '1px solid rgba(0, 240, 255, 0.1)',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '3px',
-          background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
-        }
-      }}
-    >
       {/* Header Section */}
       <Box sx={{ mb: 6, position: 'relative' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -2374,7 +2355,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData }): J
         {/* Add the new outcome stats section */}
         {renderOutcomeStats()}
       </Grid>
-    </Paper>
+      </Paper>
+    </Fade>
   );
 };
 

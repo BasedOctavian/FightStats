@@ -10,6 +10,40 @@
       content="FightStats - Combat Sports Statistics"
     />
     <title>FightStats</title>
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes fadeIn {
+        0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.4; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.05); }
+      }
+      @keyframes slideIn {
+        0% { opacity: 0; transform: translateX(-20px); }
+        100% { opacity: 1; transform: translateX(0); }
+      }
+      @keyframes slideOut {
+        0% { opacity: 1; transform: translateX(0); }
+        100% { opacity: 0; transform: translateX(20px); }
+      }
+      @keyframes progressFill {
+        0% { transform: scaleX(0); }
+        100% { transform: scaleX(1); }
+      }
+      @keyframes logoGlow {
+        0% { filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.3)); }
+        100% { filter: drop-shadow(0 0 30px rgba(0, 240, 255, 0.5)); }
+      }
+      @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+      }
+    </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

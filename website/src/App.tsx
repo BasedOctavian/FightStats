@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import FighterDetailPage from './pages/fighter/FighterDetailPage';
 import EventDetailPage from './pages/event/EventDetailPage';
 import FightDetailPage from './pages/fight/FightDetailPage';
+import VisualizePage from './pages/VisualizePage';
 import TopBar from './components/TopBar';
 
 const App: React.FC = () => {
@@ -20,6 +21,7 @@ const App: React.FC = () => {
             <Route path="/fighter/:id" element={<FighterDetailPage />} />
             <Route path="/event/:id" element={<EventDetailPage />} />
             <Route path="/fight/:encodedFightCode" element={<FightDetailPage />} />
+            <Route path="/visualize" element={<VisualizePage />} />
           </Routes>
         </Box>
       </Router>

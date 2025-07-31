@@ -14,6 +14,7 @@ import {
   Fade,
 } from '@mui/material';
 import LoadingScreen from '../../components/common/LoadingScreen';
+
 import {
   ArrowBack as ArrowBackIcon,
   Analytics as AnalyticsIcon,
@@ -23,7 +24,8 @@ import {
   DirectionsRun as MovementIcon,
   Bolt as ComboIcon,
 } from '@mui/icons-material';
-import { useFighter } from '../../hooks/useFighters';
+import { useFighter, useFightersByIds } from '../../hooks/useFighters';
+import { useFighterFights } from '../../hooks/useFights';
 import BasicInfo from '../../components/fighter/BasicInfo';
 import FightHistory from '../../components/fighter/FightHistory';
 import StrikingInfo from '../../components/fighter/StrikingInfo';
@@ -47,14 +49,17 @@ const TabPanel = (props: TabPanelProps) => {
   const { children, value, index, ...other } = props;
 
   return (
-    <Fade in={value === index} timeout={400}>
+    <Fade in={value === index} timeout={600} easing="cubic-bezier(0.4, 0, 0.2, 1)">
       <div
         role="tabpanel"
         hidden={value !== index}
         id={`fighter-tabpanel-${index}`}
         aria-labelledby={`fighter-tab-${index}`}
         {...other}
-        style={{ display: value === index ? 'block' : 'none' }}
+        style={{ 
+          display: value === index ? 'block' : 'none',
+          animation: value === index ? 'fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'
+        }}
       >
         {value === index && children}
       </div>
@@ -75,6 +80,11 @@ const FighterDetailPage: React.FC = () => {
   const theme = useTheme();
   const { fighter, loading, error } = useFighter(id || null);
   const [tabValue, setTabValue] = useState(0);
+  const [showLoading, setShowLoading] = useState(true);
+  const loadingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const hasInitiallyLoaded = React.useRef(false);
+  const minLoadingTimeRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
 
   // Add weight class hook
   const weightClassName = useMemo(() => {
@@ -88,8 +98,20 @@ const FighterDetailPage: React.FC = () => {
     error: any;
   };
 
-  // Combined loading state
-  const isDataLoading = loading || weightClassLoading;
+  // Get fighter's fights for resume rating calculation
+  const { fights, loading: fightsLoading } = useFighterFights(fighter?.fighterCode || null);
+  
+  // Get unique opponent codes from fights
+  const opponentCodes = React.useMemo(() => {
+    if (!fights) return [];
+    const opponentSet = new Set(fights.map(fight => 
+      fighter?.fighterCode && fight.fighterA === fighter.fighterCode ? fight.fighterB : fight.fighterA
+    ));
+    return Array.from(opponentSet);
+  }, [fights, fighter?.fighterCode]);
+
+  // Fetch all opponent data
+  const { fighters: opponents, loading: opponentsLoading } = useFightersByIds(opponentCodes);
 
   // Log weight class data fields
   useEffect(() => {
@@ -110,7 +132,12 @@ const FighterDetailPage: React.FC = () => {
       {
         icon: <AnalyticsIcon />,
         label: "Overview",
-        component: <BasicInfo fighter={fighter} weightClassAvgData={weightClassData} />
+        component: <BasicInfo 
+          fighter={fighter} 
+          weightClassAvgData={weightClassData}
+          fights={fights}
+          opponents={opponents}
+        />
       },
       {
         icon: <StrikingIcon />,
@@ -140,9 +167,20 @@ const FighterDetailPage: React.FC = () => {
     ];
   }, [fighter, weightClassData]);
 
-  // Reset tab when fighter ID changes
+  // Reset tab and loading state when fighter ID changes
   useEffect(() => {
     setTabValue(0);
+    setShowLoading(true);
+    setMinTimeElapsed(false);
+    hasInitiallyLoaded.current = false;
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = null;
+    }
+    if (minLoadingTimeRef.current) {
+      clearTimeout(minLoadingTimeRef.current);
+      minLoadingTimeRef.current = null;
+    }
   }, [id]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -153,15 +191,36 @@ const FighterDetailPage: React.FC = () => {
     navigate('/');
   };
 
-  if (isDataLoading) {
-    return (
-      <LoadingScreen 
-        message="Loading fighter data..." 
-        size="large"
-        showLogo={true}
-        fullScreen={true}
-      />
-    );
+
+
+  // Debounced loading logic to prevent stuttering
+  const isLoading = loading || weightClassLoading || fightsLoading || opponentsLoading;
+  
+  React.useEffect(() => {
+    // Set minimum loading time of 1 second
+    if (!minLoadingTimeRef.current) {
+      minLoadingTimeRef.current = setTimeout(() => {
+        setMinTimeElapsed(true);
+        minLoadingTimeRef.current = null;
+      }, 1000);
+    }
+
+    // Hide loading only after minimum time AND data is loaded
+    if (!isLoading && showLoading && minTimeElapsed) {
+      setShowLoading(false);
+      hasInitiallyLoaded.current = true;
+    }
+    
+    return () => {
+      if (minLoadingTimeRef.current) {
+        clearTimeout(minLoadingTimeRef.current);
+        minLoadingTimeRef.current = null;
+      }
+    };
+  }, [isLoading, showLoading, minTimeElapsed]);
+  
+  if (showLoading) {
+    return <LoadingScreen key={`loading-${id}`} message="Loading Fighter Data..." showProgress={true} />;
   }
 
   if (error || !fighter) {
@@ -233,6 +292,8 @@ const FighterDetailPage: React.FC = () => {
       bgcolor: '#0A0E17',
       background: 'linear-gradient(135deg, #0A0E17 0%, #1A1F2E 100%)',
       position: 'relative',
+      animation: 'fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+      overflow: 'hidden',
       '&::before': {
         content: '""',
         position: 'absolute',
@@ -241,6 +302,17 @@ const FighterDetailPage: React.FC = () => {
         right: 0,
         height: '400px',
         background: 'linear-gradient(180deg, rgba(0, 240, 255, 0.1) 0%, rgba(0, 240, 255, 0) 100%)',
+        pointerEvents: 'none',
+      },
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: '20%',
+        right: '-10%',
+        width: '300px',
+        height: '300px',
+        background: 'radial-gradient(circle, rgba(0, 240, 255, 0.05) 0%, transparent 70%)',
+        animation: 'pulse 6s ease-in-out infinite',
         pointerEvents: 'none',
       }
     }}>
@@ -277,11 +349,13 @@ const FighterDetailPage: React.FC = () => {
               borderRadius: '8px',
               px: 2,
               py: 1,
+              animation: 'slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both',
               '&:hover': {
                 bgcolor: 'rgba(0, 240, 255, 0.1)',
                 transform: 'translateX(-4px)',
+                boxShadow: '0 4px 12px rgba(0, 240, 255, 0.2)',
               },
-              transition: 'all 0.2s ease-in-out',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               fontWeight: 500,
               textTransform: 'none',
               fontSize: '1rem',
@@ -295,12 +369,19 @@ const FighterDetailPage: React.FC = () => {
             elevation={0}
             sx={{
               bgcolor: 'rgba(10, 14, 23, 0.8)',
-              borderRadius: '16px',
+              borderRadius: '20px',
               border: '1px solid rgba(0, 240, 255, 0.2)',
               p: 4,
-              backdropFilter: 'blur(10px)',
+              backdropFilter: 'blur(20px)',
               position: 'relative',
               overflow: 'hidden',
+              animation: 'slideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both',
+              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                borderColor: 'rgba(0, 240, 255, 0.4)',
+                transform: 'translateY(-4px) scale(1.02)',
+                boxShadow: '0 12px 40px rgba(0, 240, 255, 0.15)',
+              },
               '&::before': {
                 content: '""',
                 position: 'absolute',
@@ -309,6 +390,7 @@ const FighterDetailPage: React.FC = () => {
                 right: 0,
                 height: '2px',
                 background: 'linear-gradient(90deg, #00F0FF 0%, rgba(0, 240, 255, 0.1) 100%)',
+                animation: 'shimmer 3s ease-in-out infinite',
               },
               '&::after': {
                 content: '""',
@@ -318,6 +400,9 @@ const FighterDetailPage: React.FC = () => {
                 width: '2px',
                 height: '100%',
                 background: 'linear-gradient(180deg, #00F0FF 0%, rgba(0, 240, 255, 0.1) 100%)',
+              },
+              '&:hover::before': {
+                background: 'linear-gradient(90deg, #00F0FF 0%, #00D4FF 50%, rgba(0, 240, 255, 0.1) 100%)',
               }
             }}
           >
@@ -373,6 +458,7 @@ const FighterDetailPage: React.FC = () => {
                     alignItems: 'center',
                     gap: 2,
                     flexWrap: 'wrap',
+                    animation: 'fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both',
                   }}
                 >
                   {fighter.fighterName || fighter.name}
@@ -400,7 +486,15 @@ const FighterDetailPage: React.FC = () => {
                   mt: 2,
                   bgcolor: 'rgba(0, 240, 255, 0.03)',
                   p: 3,
-                  borderRadius: '12px',
+                  borderRadius: '16px',
+                  border: '1px solid rgba(0, 240, 255, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  animation: 'fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.6s both',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    bgcolor: 'rgba(0, 240, 255, 0.05)',
+                    borderColor: 'rgba(0, 240, 255, 0.2)',
+                  }
                 }}>
                   {/* Physical Stats */}
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -488,6 +582,7 @@ const FighterDetailPage: React.FC = () => {
                   alignItems: 'center', 
                   flexWrap: 'wrap',
                   mt: 3,
+                  animation: 'fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.8s both',
                 }}>
                   <Chip 
                     label={`Record: ${record}`} 
@@ -497,8 +592,11 @@ const FighterDetailPage: React.FC = () => {
                       fontWeight: 600,
                       border: '1px solid rgba(0, 240, 255, 0.3)',
                       px: 1,
+                      transition: 'all 0.3s ease',
                       '&:hover': {
                         bgcolor: 'rgba(0, 240, 255, 0.15)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 12px rgba(0, 240, 255, 0.2)',
                       }
                     }} 
                   />
@@ -510,8 +608,11 @@ const FighterDetailPage: React.FC = () => {
                       fontWeight: 600,
                       border: '1px solid rgba(0, 240, 255, 0.3)',
                       px: 1,
+                      transition: 'all 0.3s ease',
                       '&:hover': {
                         bgcolor: 'rgba(0, 240, 255, 0.15)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 12px rgba(0, 240, 255, 0.2)',
                       }
                     }} 
                   />
@@ -528,6 +629,7 @@ const FighterDetailPage: React.FC = () => {
           borderBottom: '1px solid rgba(0, 240, 255, 0.2)',
           mb: 4,
           position: 'relative',
+          animation: 'slideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both',
           '&::after': {
             content: '""',
             position: 'absolute',

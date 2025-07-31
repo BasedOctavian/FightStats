@@ -14,11 +14,11 @@ interface GrapplingInfoProps {
 const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgData }): JSX.Element => {
   // State for managing collapsed sections
   const [collapsedSections, setCollapsedSections] = React.useState({
-    overallGrappling: false,
-    grapplingRating: false,
-    groundGame: false,
-    submissions: false,
-    clinch: false,
+    overallGrappling: false, // Keep this expanded by default
+    grapplingRating: true,   // Collapse by default
+    groundGame: true,        // Collapse by default
+    submissions: true,       // Collapse by default
+    clinch: true,           // Collapse by default
   });
 
   const toggleSection = (section: keyof typeof collapsedSections) => {

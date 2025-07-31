@@ -12,10 +12,10 @@ interface MovementInfoProps {
 const MovementInfo: React.FC<MovementInfoProps> = ({ fighter, weightClassAvgData }): JSX.Element => {
   // State for managing collapsed sections
   const [collapsedSections, setCollapsedSections] = React.useState({
-    overallMovement: false,
-    cagePosition: false,
-    clinchPosition: false,
-    groundPosition: false,
+    overallMovement: false, // Overall Movement Analysis starts expanded
+    cagePosition: true,     // Cage Position Analysis starts collapsed
+    clinchPosition: true,   // Clinch Position Analysis starts collapsed
+    groundPosition: true,   // Ground Position Analysis starts collapsed
   });
 
   const toggleSection = (section: keyof typeof collapsedSections) => {
