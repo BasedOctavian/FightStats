@@ -12,6 +12,7 @@ import {
   Tabs,
   Tab,
   Fade,
+  Skeleton,
 } from '@mui/material';
 import LoadingScreen from '../../components/common/LoadingScreen';
 
@@ -33,6 +34,7 @@ import GrapplingInfo from '../../components/fighter/GrapplingInfo';
 import MovementInfo from '../../components/fighter/MovementInfo';
 import ComboInfo from '../../components/fighter/ComboInfo';
 import { useWeightClass } from '../../hooks/useWeightClass';
+import { colors } from '../../theme/colors';
 
 // Helper function to format record
 const formatRecord = (wins: number, losses: number): string => {
@@ -73,6 +75,250 @@ interface WeightClassData {
   subwin?: number;
   decwin?: number;
 }
+
+// Skeleton components for fighter info
+const FighterInfoSkeleton: React.FC = () => {
+  const theme = useTheme();
+  
+  return (
+    <Box sx={{ 
+      minHeight: '100vh', 
+      bgcolor: colors.background,
+      background: colors.gradientPrimary,
+      position: 'relative',
+      overflow: 'hidden',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '400px',
+        background: colors.gradientSecondary,
+        pointerEvents: 'none',
+      },
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: '20%',
+        right: '-10%',
+        width: '300px',
+        height: '300px',
+        background: colors.radialPrimary,
+        animation: 'pulse 6s ease-in-out infinite',
+        pointerEvents: 'none',
+      }
+    }}>
+      {/* Header */}
+      <Paper 
+        elevation={0} 
+        sx={{ 
+          bgcolor: 'transparent',
+          position: 'relative',
+          mb: 4,
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: colors.gradientTertiary,
+            backdropFilter: 'blur(20px)',
+            borderBottom: `1px solid ${colors.borderPrimary}`,
+            zIndex: -1,
+          }
+        }}
+      >
+        <Container maxWidth="lg" sx={{ py: 2 }}>
+          {/* Back Button Skeleton */}
+          <Skeleton
+            variant="rectangular"
+            width={150}
+            height={40}
+            sx={{ 
+              mb: 3,
+              borderRadius: '8px',
+              bgcolor: colors.overlayPrimary,
+            }}
+          />
+
+          {/* Fighter Info Container Skeleton */}
+          <Paper
+            elevation={0}
+            sx={{
+              bgcolor: colors.backgroundTertiary,
+              borderRadius: '20px',
+              border: `1px solid ${colors.borderPrimary}`,
+              p: 4,
+              backdropFilter: 'blur(20px)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <Box sx={{ display: 'flex', gap: 4, alignItems: 'flex-start' }}>
+              {/* Fighter Image Skeleton */}
+              <Skeleton
+                variant="rectangular"
+                width={200}
+                height={200}
+                sx={{ 
+                  borderRadius: '12px',
+                  bgcolor: colors.overlayPrimary,
+                  flexShrink: 0,
+                }}
+              />
+              
+              {/* Fighter Info Skeleton */}
+              <Box sx={{ flexGrow: 1 }}>
+                {/* Name Skeleton */}
+                <Skeleton
+                  variant="text"
+                  width="60%"
+                  height={48}
+                  sx={{ 
+                    mb: 1,
+                    bgcolor: colors.overlayPrimary,
+                  }}
+                />
+                
+                {/* Nickname Skeleton */}
+                <Skeleton
+                  variant="text"
+                  width="40%"
+                  height={32}
+                  sx={{ 
+                    mb: 3,
+                    bgcolor: colors.overlayPrimary,
+                  }}
+                />
+
+                {/* Fighter Details Grid Skeleton */}
+                <Box sx={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: 3,
+                  mb: 3,
+                  mt: 2,
+                  bgcolor: colors.overlayTertiary,
+                  p: 3,
+                  borderRadius: '16px',
+                  border: `1px solid ${colors.borderSecondary}`,
+                  backdropFilter: 'blur(10px)',
+                }}>
+                  {/* Physical Stats Skeleton */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {[1, 2, 3, 4].map((i) => (
+                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Skeleton
+                          variant="text"
+                          width={80}
+                          height={24}
+                          sx={{ bgcolor: colors.overlayPrimary }}
+                        />
+                        <Skeleton
+                          variant="text"
+                          width="60%"
+                          height={24}
+                          sx={{ bgcolor: colors.overlayPrimary }}
+                        />
+                      </Box>
+                    ))}
+                  </Box>
+
+                  {/* Personal Info Skeleton */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {[1, 2, 3].map((i) => (
+                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Skeleton
+                          variant="text"
+                          width={80}
+                          height={24}
+                          sx={{ bgcolor: colors.overlayPrimary }}
+                        />
+                        <Skeleton
+                          variant="text"
+                          width="70%"
+                          height={24}
+                          sx={{ bgcolor: colors.overlayPrimary }}
+                        />
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+
+                {/* Stats Chips Skeleton */}
+                <Box sx={{ 
+                  display: 'flex', 
+                  gap: 2, 
+                  alignItems: 'center', 
+                  flexWrap: 'wrap',
+                  mt: 3,
+                }}>
+                  <Skeleton
+                    variant="rectangular"
+                    width={120}
+                    height={32}
+                    sx={{ 
+                      borderRadius: '16px',
+                      bgcolor: colors.overlayPrimary,
+                    }}
+                  />
+                  <Skeleton
+                    variant="rectangular"
+                    width={140}
+                    height={32}
+                    sx={{ 
+                      borderRadius: '16px',
+                      bgcolor: colors.overlayPrimary,
+                    }}
+                  />
+                </Box>
+              </Box>
+            </Box>
+          </Paper>
+        </Container>
+      </Paper>
+
+      {/* Tabs Navigation Skeleton */}
+      <Container maxWidth="lg">
+        <Box sx={{ 
+          borderBottom: `1px solid ${colors.borderPrimary}`,
+          mb: 4,
+          position: 'relative',
+        }}>
+          <Box sx={{ display: 'flex', gap: 2, overflow: 'hidden' }}>
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton
+                key={i}
+                variant="rectangular"
+                width={120}
+                height={48}
+                sx={{ 
+                  borderRadius: '8px 8px 0 0',
+                  bgcolor: colors.overlayPrimary,
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
+
+        {/* Tab Content Skeleton */}
+        <Box sx={{ mt: 4 }}>
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height={400}
+            sx={{ 
+              borderRadius: '12px',
+              bgcolor: colors.overlayPrimary,
+            }}
+          />
+        </Box>
+      </Container>
+    </Box>
+  );
+};
 
 const FighterDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -181,17 +427,19 @@ const FighterDetailPage: React.FC = () => {
       clearTimeout(minLoadingTimeRef.current);
       minLoadingTimeRef.current = null;
     }
+    // Scroll to top when fighter ID changes (new page load)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [id]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+    // Scroll to top when switching tabs
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBackClick = () => {
     navigate('/');
   };
-
-
 
   // Debounced loading logic to prevent stuttering
   const isLoading = loading || weightClassLoading || fightsLoading || opponentsLoading;
@@ -219,28 +467,29 @@ const FighterDetailPage: React.FC = () => {
     };
   }, [isLoading, showLoading, minTimeElapsed]);
   
+  // Show skeleton loading instead of full loading screen
   if (showLoading) {
-    return <LoadingScreen key={`loading-${id}`} message="Loading Fighter Data..." showProgress={true} />;
+    return <FighterInfoSkeleton />;
   }
 
   if (error || !fighter) {
     return (
       <Box sx={{ 
         minHeight: '100vh', 
-        bgcolor: '#0A0E17',
-        background: 'linear-gradient(135deg, #0A0E17 0%, #1A1F2E 100%)',
+        bgcolor: colors.background,
+        background: colors.gradientPrimary,
       }}>
         <Container maxWidth="lg" sx={{ py: 4 }}>
           <Box sx={{ 
             textAlign: 'center',
             p: 4,
-            bgcolor: 'rgba(0, 240, 255, 0.05)',
+            bgcolor: colors.overlaySecondary,
             borderRadius: '12px',
-            border: '1px solid rgba(0, 240, 255, 0.1)',
+            border: `1px solid ${colors.borderSecondary}`,
             backdropFilter: 'blur(10px)',
           }}>
             <Typography variant="h4" sx={{ 
-              color: '#00F0FF',
+              color: colors.primary,
               mb: 2,
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
@@ -249,7 +498,7 @@ const FighterDetailPage: React.FC = () => {
               Fighter Not Found
             </Typography>
             <Typography variant="body1" sx={{ 
-              color: 'rgba(255, 255, 255, 0.7)',
+              color: colors.textTertiary,
               mb: 4 
             }}>
               {error || 'The requested fighter could not be found.'}
@@ -259,11 +508,11 @@ const FighterDetailPage: React.FC = () => {
               startIcon={<ArrowBackIcon />}
               onClick={handleBackClick}
               sx={{ 
-                color: '#00F0FF',
-                borderColor: '#00F0FF',
+                color: colors.primary,
+                borderColor: colors.primary,
                 '&:hover': {
-                  borderColor: '#00F0FF',
-                  bgcolor: 'rgba(0, 240, 255, 0.1)',
+                  borderColor: colors.primary,
+                  bgcolor: colors.overlayPrimary,
                 }
               }}
             >
@@ -289,10 +538,9 @@ const FighterDetailPage: React.FC = () => {
   return (
     <Box sx={{ 
       minHeight: '100vh', 
-      bgcolor: '#0A0E17',
-      background: 'linear-gradient(135deg, #0A0E17 0%, #1A1F2E 100%)',
+      bgcolor: colors.background,
+      background: colors.gradientPrimary,
       position: 'relative',
-      animation: 'fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
       overflow: 'hidden',
       '&::before': {
         content: '""',
@@ -301,7 +549,7 @@ const FighterDetailPage: React.FC = () => {
         left: 0,
         right: 0,
         height: '400px',
-        background: 'linear-gradient(180deg, rgba(0, 240, 255, 0.1) 0%, rgba(0, 240, 255, 0) 100%)',
+        background: colors.gradientSecondary,
         pointerEvents: 'none',
       },
       '&::after': {
@@ -311,7 +559,7 @@ const FighterDetailPage: React.FC = () => {
         right: '-10%',
         width: '300px',
         height: '300px',
-        background: 'radial-gradient(circle, rgba(0, 240, 255, 0.05) 0%, transparent 70%)',
+        background: colors.radialPrimary,
         animation: 'pulse 6s ease-in-out infinite',
         pointerEvents: 'none',
       }
@@ -330,9 +578,9 @@ const FighterDetailPage: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'linear-gradient(90deg, rgba(0, 240, 255, 0.1) 0%, rgba(0, 240, 255, 0.05) 100%)',
+            background: colors.gradientTertiary,
             backdropFilter: 'blur(20px)',
-            borderBottom: '1px solid rgba(0, 240, 255, 0.2)',
+            borderBottom: `1px solid ${colors.borderPrimary}`,
             zIndex: -1,
           }
         }}
@@ -344,16 +592,15 @@ const FighterDetailPage: React.FC = () => {
             startIcon={<ArrowBackIcon />}
             onClick={handleBackClick}
             sx={{ 
-              color: '#00F0FF',
+              color: colors.primary,
               mb: 3,
               borderRadius: '8px',
               px: 2,
               py: 1,
-              animation: 'slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both',
               '&:hover': {
-                bgcolor: 'rgba(0, 240, 255, 0.1)',
+                bgcolor: colors.overlayPrimary,
                 transform: 'translateX(-4px)',
-                boxShadow: '0 4px 12px rgba(0, 240, 255, 0.2)',
+                boxShadow: `0 4px 12px ${colors.shadowSecondary}`,
               },
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               fontWeight: 500,
@@ -368,19 +615,18 @@ const FighterDetailPage: React.FC = () => {
           <Paper
             elevation={0}
             sx={{
-              bgcolor: 'rgba(10, 14, 23, 0.8)',
+              bgcolor: colors.backgroundTertiary,
               borderRadius: '20px',
-              border: '1px solid rgba(0, 240, 255, 0.2)',
+              border: `1px solid ${colors.borderPrimary}`,
               p: 4,
               backdropFilter: 'blur(20px)',
               position: 'relative',
               overflow: 'hidden',
-              animation: 'slideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both',
               transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
-                borderColor: 'rgba(0, 240, 255, 0.4)',
+                borderColor: colors.borderTertiary,
                 transform: 'translateY(-4px) scale(1.02)',
-                boxShadow: '0 12px 40px rgba(0, 240, 255, 0.15)',
+                boxShadow: `0 12px 40px ${colors.shadowTertiary}`,
               },
               '&::before': {
                 content: '""',
@@ -389,7 +635,7 @@ const FighterDetailPage: React.FC = () => {
                 left: 0,
                 right: 0,
                 height: '2px',
-                background: 'linear-gradient(90deg, #00F0FF 0%, rgba(0, 240, 255, 0.1) 100%)',
+                background: colors.gradientBorder,
                 animation: 'shimmer 3s ease-in-out infinite',
               },
               '&::after': {
@@ -399,10 +645,10 @@ const FighterDetailPage: React.FC = () => {
                 left: 0,
                 width: '2px',
                 height: '100%',
-                background: 'linear-gradient(180deg, #00F0FF 0%, rgba(0, 240, 255, 0.1) 100%)',
+                background: colors.gradientVertical,
               },
               '&:hover::before': {
-                background: 'linear-gradient(90deg, #00F0FF 0%, #00D4FF 50%, rgba(0, 240, 255, 0.1) 100%)',
+                background: colors.gradientBorderHover,
               }
             }}
           >
@@ -415,8 +661,8 @@ const FighterDetailPage: React.FC = () => {
                     height: 200,
                     borderRadius: '12px',
                     overflow: 'hidden',
-                    border: '2px solid rgba(0, 240, 255, 0.3)',
-                    boxShadow: '0 0 20px rgba(0, 240, 255, 0.1)',
+                    border: `2px solid ${colors.borderTertiary}`,
+                    boxShadow: `0 0 20px ${colors.shadowPrimary}`,
                     flexShrink: 0,
                     position: 'relative',
                     '&::after': {
@@ -426,7 +672,7 @@ const FighterDetailPage: React.FC = () => {
                       left: 0,
                       right: 0,
                       bottom: 0,
-                      boxShadow: 'inset 0 0 20px rgba(0, 240, 255, 0.2)',
+                      boxShadow: `inset 0 0 20px ${colors.shadowSecondary}`,
                       pointerEvents: 'none',
                     }
                   }}
@@ -448,17 +694,16 @@ const FighterDetailPage: React.FC = () => {
                 <Typography 
                   variant="h3" 
                   sx={{ 
-                    color: '#fff',
+                    color: colors.textPrimary,
                     fontWeight: 700,
                     mb: 1,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    textShadow: '0 0 20px rgba(0, 240, 255, 0.3)',
+                    textShadow: `0 0 20px ${colors.shadowSecondary}`,
                     display: 'flex',
                     alignItems: 'center',
                     gap: 2,
                     flexWrap: 'wrap',
-                    animation: 'fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both',
                   }}
                 >
                   {fighter.fighterName || fighter.name}
@@ -467,7 +712,7 @@ const FighterDetailPage: React.FC = () => {
                       component="span"
                       variant="h5"
                       sx={{
-                        color: 'rgba(0, 240, 255, 0.8)',
+                        color: colors.primaryLight,
                         fontStyle: 'italic',
                         fontWeight: 500,
                       }}
@@ -484,58 +729,57 @@ const FighterDetailPage: React.FC = () => {
                   gap: 3,
                   mb: 3,
                   mt: 2,
-                  bgcolor: 'rgba(0, 240, 255, 0.03)',
+                  bgcolor: colors.overlayTertiary,
                   p: 3,
                   borderRadius: '16px',
-                  border: '1px solid rgba(0, 240, 255, 0.1)',
+                  border: `1px solid ${colors.borderSecondary}`,
                   backdropFilter: 'blur(10px)',
-                  animation: 'fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.6s both',
                   transition: 'all 0.3s ease',
                   '&:hover': {
-                    bgcolor: 'rgba(0, 240, 255, 0.05)',
-                    borderColor: 'rgba(0, 240, 255, 0.2)',
+                    bgcolor: colors.overlaySecondary,
+                    borderColor: colors.borderPrimary,
                   }
                 }}>
                   {/* Physical Stats */}
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     {fighter.height && (
                       <Typography variant="body1" sx={{ 
-                        color: 'rgba(255, 255, 255, 0.9)',
+                        color: colors.textSecondary,
                         display: 'flex',
                         alignItems: 'center',
                         gap: 1,
                       }}>
-                        <strong style={{ color: '#00F0FF', minWidth: '80px' }}>Height:</strong> {fighter.height}
+                        <strong style={{ color: colors.primary, minWidth: '80px' }}>Height:</strong> {fighter.height}
                       </Typography>
                     )}
                     {fighter.reach && (
                       <Typography variant="body1" sx={{ 
-                        color: 'rgba(255, 255, 255, 0.9)',
+                        color: colors.textSecondary,
                         display: 'flex',
                         alignItems: 'center',
                         gap: 1,
                       }}>
-                        <strong style={{ color: '#00F0FF', minWidth: '80px' }}>Reach:</strong> {fighter.reach}
+                        <strong style={{ color: colors.primary, minWidth: '80px' }}>Reach:</strong> {fighter.reach}
                       </Typography>
                     )}
                     {fighter.weight && (
                       <Typography variant="body1" sx={{ 
-                        color: 'rgba(255, 255, 255, 0.9)',
+                        color: colors.textSecondary,
                         display: 'flex',
                         alignItems: 'center',
                         gap: 1,
                       }}>
-                        <strong style={{ color: '#00F0FF', minWidth: '80px' }}>Weight:</strong> {fighter.weight}
+                        <strong style={{ color: colors.primary, minWidth: '80px' }}>Weight:</strong> {fighter.weight}
                       </Typography>
                     )}
                     {fighter.weightClass && (
                       <Typography variant="body1" sx={{ 
-                        color: 'rgba(255, 255, 255, 0.9)',
+                        color: colors.textSecondary,
                         display: 'flex',
                         alignItems: 'center',
                         gap: 1,
                       }}>
-                        <strong style={{ color: '#00F0FF', minWidth: '80px' }}>Division:</strong> {fighter.weightClass}
+                        <strong style={{ color: colors.primary, minWidth: '80px' }}>Division:</strong> {fighter.weightClass}
                       </Typography>
                     )}
                   </Box>
@@ -544,32 +788,32 @@ const FighterDetailPage: React.FC = () => {
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     {fighter.country && (
                       <Typography variant="body1" sx={{ 
-                        color: 'rgba(255, 255, 255, 0.9)',
+                        color: colors.textSecondary,
                         display: 'flex',
                         alignItems: 'center',
                         gap: 1,
                       }}>
-                        <strong style={{ color: '#00F0FF', minWidth: '80px' }}>Origin:</strong> {fighter.country}
+                        <strong style={{ color: colors.primary, minWidth: '80px' }}>Origin:</strong> {fighter.country}
                       </Typography>
                     )}
                     {fighter.team && (
                       <Typography variant="body1" sx={{ 
-                        color: 'rgba(255, 255, 255, 0.9)',
+                        color: colors.textSecondary,
                         display: 'flex',
                         alignItems: 'center',
                         gap: 1,
                       }}>
-                        <strong style={{ color: '#00F0FF', minWidth: '80px' }}>Team:</strong> {fighter.team}
+                        <strong style={{ color: colors.primary, minWidth: '80px' }}>Team:</strong> {fighter.team}
                       </Typography>
                     )}
                     {fighter.stance && (
                       <Typography variant="body1" sx={{ 
-                        color: 'rgba(255, 255, 255, 0.9)',
+                        color: colors.textSecondary,
                         display: 'flex',
                         alignItems: 'center',
                         gap: 1,
                       }}>
-                        <strong style={{ color: '#00F0FF', minWidth: '80px' }}>Stance:</strong> {fighter.stance}
+                        <strong style={{ color: colors.primary, minWidth: '80px' }}>Stance:</strong> {fighter.stance}
                       </Typography>
                     )}
                   </Box>
@@ -582,37 +826,36 @@ const FighterDetailPage: React.FC = () => {
                   alignItems: 'center', 
                   flexWrap: 'wrap',
                   mt: 3,
-                  animation: 'fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.8s both',
                 }}>
                   <Chip 
                     label={`Record: ${record}`} 
                     sx={{ 
-                      bgcolor: 'rgba(0, 240, 255, 0.1)', 
-                      color: '#00F0FF',
+                      bgcolor: colors.overlayPrimary, 
+                      color: colors.primary,
                       fontWeight: 600,
-                      border: '1px solid rgba(0, 240, 255, 0.3)',
+                      border: `1px solid ${colors.borderTertiary}`,
                       px: 1,
                       transition: 'all 0.3s ease',
                       '&:hover': {
-                        bgcolor: 'rgba(0, 240, 255, 0.15)',
+                        bgcolor: colors.overlayHover,
                         transform: 'translateY(-2px)',
-                        boxShadow: '0 4px 12px rgba(0, 240, 255, 0.2)',
+                        boxShadow: `0 4px 12px ${colors.shadowSecondary}`,
                       }
                     }} 
                   />
                   <Chip 
                     label={`${fighter.FightsTracked || 0} fights tracked`} 
                     sx={{ 
-                      bgcolor: 'rgba(0, 240, 255, 0.1)', 
-                      color: '#00F0FF',
+                      bgcolor: colors.overlayPrimary, 
+                      color: colors.primary,
                       fontWeight: 600,
-                      border: '1px solid rgba(0, 240, 255, 0.3)',
+                      border: `1px solid ${colors.borderTertiary}`,
                       px: 1,
                       transition: 'all 0.3s ease',
                       '&:hover': {
-                        bgcolor: 'rgba(0, 240, 255, 0.15)',
+                        bgcolor: colors.overlayHover,
                         transform: 'translateY(-2px)',
-                        boxShadow: '0 4px 12px rgba(0, 240, 255, 0.2)',
+                        boxShadow: `0 4px 12px ${colors.shadowSecondary}`,
                       }
                     }} 
                   />
@@ -626,10 +869,9 @@ const FighterDetailPage: React.FC = () => {
       {/* Tabs Navigation */}
       <Container maxWidth="lg">
         <Box sx={{ 
-          borderBottom: '1px solid rgba(0, 240, 255, 0.2)',
+          borderBottom: `1px solid ${colors.borderPrimary}`,
           mb: 4,
           position: 'relative',
-          animation: 'slideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both',
           '&::after': {
             content: '""',
             position: 'absolute',
@@ -637,7 +879,7 @@ const FighterDetailPage: React.FC = () => {
             left: 0,
             right: 0,
             height: '1px',
-            background: 'linear-gradient(90deg, rgba(0, 240, 255, 0.5), transparent)',
+            background: `linear-gradient(90deg, ${colors.primary}, transparent)`,
           }
         }}>
           <Tabs 
@@ -653,22 +895,22 @@ const FighterDetailPage: React.FC = () => {
                 textTransform: 'uppercase',
                 letterSpacing: '0.1em',
                 fontWeight: 600,
-                color: 'rgba(255, 255, 255, 0.7)',
+                color: colors.textTertiary,
                 transition: 'all 0.3s ease',
                 '&:hover': {
-                  color: '#00F0FF',
-                  bgcolor: 'rgba(0, 240, 255, 0.1)',
+                  color: colors.primary,
+                  bgcolor: colors.overlayPrimary,
                 },
               },
               '& .Mui-selected': {
-                color: '#00F0FF !important',
-                textShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                color: `${colors.primary} !important`,
+                textShadow: `0 0 10px ${colors.shadowSecondary}`,
               },
               '& .MuiTabs-indicator': {
-                backgroundColor: '#00F0FF',
+                backgroundColor: colors.primary,
                 height: 3,
                 borderRadius: '3px 3px 0 0',
-                boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                boxShadow: `0 0 10px ${colors.shadowSecondary}`,
               },
             }}
           >

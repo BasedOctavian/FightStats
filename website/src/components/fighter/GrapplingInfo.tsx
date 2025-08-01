@@ -5,6 +5,7 @@ import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Responsi
 import { Fighter } from '../../types/firestore';
 import { useBasicInfo } from '../../hooks/stats/useBasicInfo';
 import { useGrapplingInfo } from '../../hooks/stats/useGrapplingInfo';
+import { colors } from '../../theme/colors';
 
 interface GrapplingInfoProps {
   fighter: Fighter;
@@ -264,25 +265,25 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
       return (
         <Box
           sx={{
-            bgcolor: 'rgba(10, 14, 23, 0.95)',
-            border: '1px solid rgba(0, 240, 255, 0.3)',
+            bgcolor: colors.backgroundTertiary,
+            border: `1px solid ${colors.borderTertiary}`,
             p: 2,
             borderRadius: '6px',
             backdropFilter: 'blur(10px)',
             maxWidth: 280,
-            boxShadow: '0 4px 12px rgba(0, 240, 255, 0.1)',
+            boxShadow: `0 4px 12px ${colors.shadowPrimary}`,
           }}
         >
-          <Typography sx={{ color: '#00F0FF', fontWeight: 600, mb: 1 }}>
+          <Typography sx={{ color: colors.primary, fontWeight: 600, mb: 1 }}>
             {data.subject}
           </Typography>
-          <Typography sx={{ color: '#fff', fontSize: '0.9rem', mb: 1 }}>
+          <Typography sx={{ color: colors.textPrimary, fontSize: '0.9rem', mb: 1 }}>
             {fighter.fighterName}: {valueDisplay.fighterValue}
           </Typography>
-          <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.85rem' }}>
+          <Typography sx={{ color: colors.textTertiary, fontSize: '0.85rem' }}>
             Weight Class Avg: {valueDisplay.weightClassValue}
           </Typography>
-          <Typography sx={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.8rem', mt: 1, fontStyle: 'italic' }}>
+          <Typography sx={{ color: colors.textMuted, fontSize: '0.8rem', mt: 1, fontStyle: 'italic' }}>
             {data.description}
           </Typography>
         </Box>
@@ -584,14 +585,14 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
     collapsibleSection: {
       mb: 4,
       borderRadius: '12px',
-      bgcolor: 'rgba(10, 14, 23, 0.4)',
-      border: '1px solid rgba(0, 240, 255, 0.15)',
+      bgcolor: colors.backgroundSecondary,
+      border: `1px solid ${colors.borderSecondary}`,
       position: 'relative' as const,
       overflow: 'hidden',
       transition: 'all 0.3s ease',
       '&:hover': {
-        bgcolor: 'rgba(10, 14, 23, 0.6)',
-        border: '1px solid rgba(0, 240, 255, 0.3)',
+        bgcolor: colors.background,
+        border: `1px solid ${colors.borderPrimary}`,
       },
       '&::before': {
         content: '""',
@@ -600,7 +601,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
         left: 0,
         right: 0,
         height: '1px',
-        background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+        background: `linear-gradient(90deg, ${colors.primary}, ${colors.primaryDark})`,
         opacity: 0.5,
       }
     },
@@ -613,7 +614,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
       cursor: 'pointer',
       transition: 'all 0.3s ease',
       '&:hover': {
-        bgcolor: 'rgba(0, 240, 255, 0.05)',
+        bgcolor: colors.overlayPrimary,
       }
     },
 
@@ -624,7 +625,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
     },
 
     expandIcon: {
-      color: '#00F0FF',
+      color: colors.primary,
       transition: 'transform 0.3s ease',
       '&.expanded': {
         transform: 'rotate(180deg)',
@@ -635,16 +636,16 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
     card: {
       p: 3,
       borderRadius: '12px',
-      bgcolor: 'rgba(10, 14, 23, 0.4)',
-      border: '1px solid rgba(0, 240, 255, 0.15)',
+      bgcolor: colors.backgroundSecondary,
+      border: `1px solid ${colors.borderSecondary}`,
       height: '100%',
       position: 'relative' as const,
       overflow: 'hidden',
       transition: 'all 0.3s ease',
       '&:hover': {
-        bgcolor: 'rgba(10, 14, 23, 0.6)',
+        bgcolor: colors.background,
         transform: 'translateY(-2px)',
-        border: '1px solid rgba(0, 240, 255, 0.3)',
+        border: `1px solid ${colors.borderPrimary}`,
         '& .rating-icon': {
           transform: 'scale(1.1)',
         },
@@ -659,7 +660,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
         left: 0,
         right: 0,
         height: '1px',
-        background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+        background: `linear-gradient(90deg, ${colors.primary}, ${colors.primaryDark})`,
         opacity: 0.5,
       }
     },
@@ -680,14 +681,14 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, rgba(10, 14, 23, 0.9), rgba(10, 14, 23, 0.7))',
-      border: '1px solid rgba(0, 240, 255, 0.2)',
+      background: `linear-gradient(135deg, ${colors.background}, ${colors.backgroundSecondary})`,
+      border: `1px solid ${colors.borderSecondary}`,
       transition: 'transform 0.3s ease',
     },
 
     // Title styling
     title: {
-      color: '#fff',
+      color: colors.textPrimary,
       fontWeight: 600,
       fontSize: '1.1rem',
       textTransform: 'uppercase' as const,
@@ -696,30 +697,30 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
 
     // Overall rating specific styles
     overallCard: {
-      background: 'linear-gradient(145deg, rgba(20, 25, 40, 0.98) 0%, rgba(30, 40, 60, 0.95) 100%)',
-      border: '2px solid rgba(0, 150, 255, 0.3)',
-      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 150, 255, 0.15), 0 0 60px rgba(0, 150, 255, 0.1)',
+      background: `linear-gradient(145deg, ${colors.backgroundSecondary} 0%, ${colors.background} 100%)`,
+      border: `2px solid ${colors.borderPrimary}`,
+      boxShadow: `0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px ${colors.borderSecondary}, 0 0 60px ${colors.shadowPrimary}`,
       '&:hover': {
-        border: '2px solid rgba(0, 150, 255, 0.5)',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 150, 255, 0.25), 0 0 80px rgba(0, 150, 255, 0.15)',
+        border: `2px solid ${colors.borderTertiary}`,
+        boxShadow: `0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px ${colors.borderPrimary}, 0 0 80px ${colors.shadowSecondary}`,
       }
     },
 
     overallValue: {
       fontSize: { xs: '3.5rem', sm: '4rem' },
       fontWeight: 900,
-      background: 'linear-gradient(135deg, #FFFFFF 0%, #00F0FF 30%, #0096FF 70%, #0066FF 100%)',
+      background: `linear-gradient(135deg, ${colors.textPrimary} 0%, ${colors.primary} 30%, ${colors.primaryLight} 70%, ${colors.primaryDark} 100%)`,
       backgroundClip: 'text',
       WebkitBackgroundClip: 'text',
       WebkitTextFillColor: 'transparent',
-      textShadow: '0 0 40px rgba(255, 255, 255, 0.6)',
+      textShadow: `0 0 40px ${colors.textPrimary}99`,
       fontFamily: '"Orbitron", "Roboto", sans-serif',
       letterSpacing: '0.15em',
       mb: 1,
     },
 
     overallLabel: {
-      color: '#FFFFFF',
+      color: colors.textPrimary,
       fontSize: '1rem',
       fontWeight: 700,
       textTransform: 'uppercase' as const,
@@ -730,7 +731,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
 
     // Description
     description: {
-      color: 'rgba(255, 255, 255, 0.5)',
+      color: colors.textMuted,
       fontSize: '0.9rem',
       mb: 2,
       fontStyle: 'italic',
@@ -814,7 +815,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
         borderRadius: '12px',
         position: 'relative',
         overflow: 'hidden',
-        border: '1px solid rgba(0, 240, 255, 0.1)',
+        border: `1px solid ${colors.borderSecondary}`,
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -822,7 +823,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
           left: 0,
           width: '100%',
           height: '3px',
-          background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+          background: `linear-gradient(90deg, ${colors.primary}, ${colors.primaryDark})`,
         }
       }}
     >
@@ -844,11 +845,11 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
             variant="h4" 
             sx={{ 
               fontWeight: 700,
-              color: '#fff',
+              color: colors.textPrimary,
               fontSize: { xs: '1.75rem', sm: '2rem' },
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
-              textShadow: '0 0 20px rgba(0, 240, 255, 0.3)',
+              textShadow: `0 0 20px ${colors.primary}4D`,
             }}
           >
             Grappling Analysis
@@ -857,7 +858,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
         <Typography 
           variant="subtitle1" 
           sx={{ 
-            color: 'rgba(255, 255, 255, 0.7)',
+            color: colors.textTertiary,
             maxWidth: '600px',
             position: 'relative',
             pl: 2,
@@ -869,7 +870,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
               width: '4px',
               height: '50%',
               transform: 'translateY(-50%)',
-              background: 'linear-gradient(180deg, #00F0FF, transparent)',
+              background: `linear-gradient(180deg, ${colors.primary}, transparent)`,
               borderRadius: '2px',
             }
           }}
@@ -909,8 +910,8 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                       width: '16px',
                       height: '16px',
                       borderRadius: '50%',
-                      background: '#00F0FF',
-                      boxShadow: '0 0 12px rgba(0, 240, 255, 0.5)',
+                      background: colors.primary,
+                      boxShadow: `0 0 12px ${colors.primary}80`,
                     },
                     '&::after': {
                       content: '""',
@@ -921,7 +922,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                       width: '24px',
                       height: '24px',
                       borderRadius: '50%',
-                      border: '2px solid #00F0FF',
+                      border: `2px solid ${colors.primary}`,
                       opacity: 0.3,
                     }
                   }}/>
@@ -945,7 +946,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
             <Collapse in={!collapsedSections.overallGrappling}>
               <Box sx={{ p: 4 }}>
                 <Typography sx={{
-                  color: 'rgba(255, 255, 255, 0.8)',
+                  color: colors.textSecondary,
                   fontSize: '0.95rem',
                   lineHeight: 1.6,
                   mb: 4,
@@ -960,9 +961,9 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                   mb: 4,
                   p: 3,
                   borderRadius: '12px',
-                  background: 'linear-gradient(145deg, rgba(20, 25, 40, 0.98) 0%, rgba(30, 40, 60, 0.95) 100%)',
-                  border: '2px solid rgba(0, 150, 255, 0.3)',
-                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 150, 255, 0.15), 0 0 60px rgba(0, 150, 255, 0.1)',
+                  background: `linear-gradient(145deg, ${colors.backgroundSecondary} 0%, ${colors.background} 100%)`,
+                  border: `2px solid ${colors.borderPrimary}`,
+                  boxShadow: `0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px ${colors.borderSecondary}, 0 0 60px ${colors.shadowPrimary}`,
                   position: 'relative',
                   overflow: 'hidden',
                   '&::before': {
@@ -972,12 +973,12 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                     left: 0,
                     right: 0,
                     height: '1px',
-                    background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+                    background: `linear-gradient(90deg, ${colors.primary}, ${colors.primaryDark})`,
                     opacity: 0.5,
                   }
                 }}>
                   <Typography sx={{
-                    color: '#FFFFFF',
+                    color: colors.textPrimary,
                     fontSize: '1.2rem',
                     fontWeight: 700,
                     textTransform: 'uppercase',
@@ -997,9 +998,9 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                     width: 140,
                     height: 140,
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, rgba(10, 14, 23, 0.8) 0%, rgba(20, 30, 50, 0.6) 100%)',
-                    border: '2px solid rgba(0, 240, 255, 0.2)',
-                    boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.3), 0 0 30px rgba(0, 240, 255, 0.1)',
+                    background: `linear-gradient(135deg, ${colors.backgroundSecondary} 0%, ${colors.background} 100%)`,
+                    border: `2px solid ${colors.borderSecondary}`,
+                    boxShadow: `inset 0 0 20px rgba(0, 0, 0, 0.3), 0 0 30px ${colors.shadowPrimary}`,
                     mb: 2,
                     '&::before': {
                       content: '""',
@@ -1010,7 +1011,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                       width: '120px',
                       height: '120px',
                       borderRadius: '50%',
-                      background: 'conic-gradient(from 0deg, #00F0FF 0deg, #00F0FF ' + (overallGrapplingGrade * 3.6) + 'deg, rgba(0, 240, 255, 0.1) ' + (overallGrapplingGrade * 3.6) + 'deg, rgba(0, 240, 255, 0.1) 360deg)',
+                      background: `conic-gradient(from 0deg, ${colors.primary} 0deg, ${colors.primary} ` + (overallGrapplingGrade * 3.6) + `deg, ${colors.primary}1A ` + (overallGrapplingGrade * 3.6) + `deg, ${colors.primary}1A 360deg)`,
                       zIndex: 1,
                     },
                     '&::after': {
@@ -1022,8 +1023,8 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                       width: '100px',
                       height: '100px',
                       borderRadius: '50%',
-                      background: 'rgba(10, 14, 23, 0.95)',
-                      border: '1px solid rgba(0, 240, 255, 0.15)',
+                      background: colors.backgroundTertiary,
+                      border: `1px solid ${colors.borderSecondary}`,
                       zIndex: 2,
                     }
                   }}>
@@ -1039,18 +1040,18 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                         sx={{
                           fontSize: '2.2rem',
                           fontWeight: 800,
-                          color: '#00F0FF',
+                          color: colors.primary,
                           fontFamily: '"Orbitron", "Roboto Mono", monospace',
                           letterSpacing: '0.1em',
                           lineHeight: 1,
-                          textShadow: '0 0 15px rgba(0, 240, 255, 0.5)',
+                          textShadow: `0 0 15px ${colors.primary}80`,
                         }}
                       >
                         {overallGrapplingGrade.toFixed(0)}
                       </Typography>
                       <Typography
                         sx={{
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: colors.textTertiary,
                           fontSize: '0.75rem',
                           fontWeight: 600,
                           textTransform: 'uppercase',
@@ -1065,7 +1066,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                   </Box>
                   
                   <Typography sx={{
-                    color: 'rgba(255, 255, 255, 0.7)',
+                    color: colors.textTertiary,
                     fontSize: '1rem',
                     fontWeight: 500,
                     fontFamily: '"Orbitron", "Roboto Mono", monospace',
@@ -1074,7 +1075,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                   </Typography>
                   
                   <Typography sx={{
-                    color: 'rgba(255, 255, 255, 0.6)',
+                    color: colors.textMuted,
                     fontSize: '0.9rem',
                     fontStyle: 'italic',
                     mt: 1,
@@ -1090,41 +1091,41 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                   <ResponsiveContainer>
                     <RadarChart data={prepareOverallGrapplingRadarData()} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
                       <PolarGrid 
-                        stroke="rgba(0, 240, 255, 0.1)"
+                        stroke={`${colors.primary}1A`}
                         gridType="circle"
                       />
                       <PolarAngleAxis 
                         dataKey="subject" 
                         tick={{ 
-                          fill: '#fff',
+                          fill: colors.textPrimary,
                           fontSize: 12,
                           fontWeight: 500,
                         }}
-                        stroke="rgba(0, 240, 255, 0.2)"
+                        stroke={`${colors.primary}33`}
                       />
                       <PolarRadiusAxis 
                         angle={90} 
                         domain={[0, 100]}
                         tick={{ 
-                          fill: 'rgba(255, 255, 255, 0.5)',
+                          fill: colors.textMuted,
                           fontSize: 10 
                         }}
-                        stroke="rgba(0, 240, 255, 0.1)"
+                        stroke={`${colors.primary}1A`}
                       />
                       {/* Weight Class Average Radar */}
                       <Radar
                         name="Weight Class Average"
                         dataKey="weightClassValue"
-                        stroke="#FF3864"
-                        fill="#FF3864"
+                        stroke={colors.error}
+                        fill={colors.error}
                         fillOpacity={0.15}
                       />
                       {/* Fighter Stats Radar */}
                       <Radar
                         name="Fighter Stats"
                         dataKey="value"
-                        stroke="#8B5CF6"
-                        fill="#8B5CF6"
+                        stroke={colors.primary}
+                        fill={colors.primary}
                         fillOpacity={0.3}
                       />
                       <RechartsTooltip content={<CustomTooltip />} />
@@ -1140,10 +1141,10 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                       transform: 'translateX(-50%)',
                       display: 'flex',
                       gap: 3,
-                      bgcolor: 'rgba(10, 14, 23, 0.9)',
+                      bgcolor: colors.backgroundTertiary,
                       p: 1,
                       borderRadius: '6px',
-                      border: '1px solid rgba(0, 240, 255, 0.2)',
+                      border: `1px solid ${colors.borderSecondary}`,
                       backdropFilter: 'blur(5px)',
                     }}
                   >
@@ -1151,15 +1152,15 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                       <Box sx={{ 
                         width: 12, 
                         height: 12, 
-                        bgcolor: '#00F0FF',
+                        bgcolor: colors.primary,
                         borderRadius: '50%',
-                        boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                        boxShadow: `0 0 10px ${colors.primary}80`,
                       }} />
-                      <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
+                      <Typography sx={{ color: colors.textPrimary, fontSize: '0.8rem' }}>{fighter.fighterName}</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box sx={{ width: 12, height: 12, bgcolor: '#FF3864', borderRadius: '50%', opacity: 0.8 }} />
-                      <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>Weight Class Avg</Typography>
+                      <Box sx={{ width: 12, height: 12, bgcolor: colors.error, borderRadius: '50%', opacity: 0.8 }} />
+                      <Typography sx={{ color: colors.textPrimary, fontSize: '0.8rem' }}>Weight Class Avg</Typography>
                     </Box>
                   </Box>
                 </Box>
@@ -1198,8 +1199,8 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                       width: '16px',
                       height: '16px',
                       borderRadius: '50%',
-                      background: '#00F0FF',
-                      boxShadow: '0 0 12px rgba(0, 240, 255, 0.5)',
+                      background: colors.primary,
+                      boxShadow: `0 0 12px ${colors.primary}80`,
                     },
                     '&::after': {
                       content: '""',
@@ -1210,7 +1211,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                       width: '24px',
                       height: '24px',
                       borderRadius: '50%',
-                      border: '2px solid #00F0FF',
+                      border: `2px solid ${colors.primary}`,
                       opacity: 0.3,
                     }
                   }}/>
@@ -1246,9 +1247,9 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                         width: 140,
                         height: 140,
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, rgba(10, 14, 23, 0.8) 0%, rgba(20, 30, 50, 0.6) 100%)',
-                        border: '2px solid rgba(0, 240, 255, 0.2)',
-                        boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.3), 0 0 30px rgba(0, 240, 255, 0.1)',
+                        background: `linear-gradient(135deg, ${colors.backgroundSecondary} 0%, ${colors.background} 100%)`,
+                        border: `2px solid ${colors.borderSecondary}`,
+                        boxShadow: `inset 0 0 20px rgba(0, 0, 0, 0.3), 0 0 30px ${colors.shadowPrimary}`,
                         '&::before': {
                           content: '""',
                           position: 'absolute',
@@ -1258,7 +1259,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                           width: '120px',
                           height: '120px',
                           borderRadius: '50%',
-                          background: 'conic-gradient(from 0deg, #00F0FF 0deg, #00F0FF ' + (takedownRating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) ' + (takedownRating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) 360deg)',
+                          background: `conic-gradient(from 0deg, ${colors.primary} 0deg, ${colors.primary} ` + (takedownRating * 3.6) + `deg, ${colors.primary}1A ` + (takedownRating * 3.6) + `deg, ${colors.primary}1A 360deg)`,
                           zIndex: 1,
                         },
                         '&::after': {
@@ -1270,8 +1271,8 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                           width: '100px',
                           height: '100px',
                           borderRadius: '50%',
-                          background: 'rgba(10, 14, 23, 0.95)',
-                          border: '1px solid rgba(0, 240, 255, 0.15)',
+                          background: colors.backgroundTertiary,
+                          border: `1px solid ${colors.borderSecondary}`,
                           zIndex: 2,
                         }
                       }}>
@@ -1288,18 +1289,18 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                             sx={{
                               fontSize: '2.2rem',
                               fontWeight: 800,
-                              color: '#00F0FF',
+                              color: colors.primary,
                               fontFamily: '"Orbitron", "Roboto Mono", monospace',
                               letterSpacing: '0.1em',
                               lineHeight: 1,
-                              textShadow: '0 0 15px rgba(0, 240, 255, 0.5)',
+                              textShadow: `0 0 15px ${colors.primary}80`,
                             }}
                           >
                             {takedownRating.toFixed(0)}
                           </Typography>
                           <Typography
                             sx={{
-                              color: 'rgba(255, 255, 255, 0.7)',
+                              color: colors.textTertiary,
                               fontSize: '0.75rem',
                               fontWeight: 600,
                               textTransform: 'uppercase',
@@ -1322,7 +1323,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                         width: '160px',
                         height: '160px',
                         borderRadius: '50%',
-                        background: 'radial-gradient(circle, rgba(0, 240, 255, 0.1) 0%, transparent 70%)',
+                        background: `radial-gradient(circle, ${colors.primary}1A 0%, transparent 70%)`,
                         zIndex: 0,
                       }} />
                     </Box>
@@ -1331,7 +1332,7 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                   {/* Rating Description and Top Takedowns */}
                   <Grid item xs={12} md={8}>
                     <Typography sx={{
-                      color: 'rgba(255, 255, 255, 0.8)',
+                      color: colors.textSecondary,
                       fontSize: '0.95rem',
                       lineHeight: 1.6,
                       mb: 3,
@@ -1344,13 +1345,13 @@ const GrapplingInfo: React.FC<GrapplingInfoProps> = ({ fighter, weightClassAvgDa
                       <Box sx={{
                         p: 2,
                         borderRadius: '8px',
-                        background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.08) 0%, rgba(0, 102, 255, 0.04) 100%)',
-                        border: '1px solid rgba(0, 240, 255, 0.15)',
+                        background: `linear-gradient(135deg, ${colors.primary}14 0%, ${colors.primaryDark}0A 100%)`,
+                        border: `1px solid ${colors.borderSecondary}`,
                         backdropFilter: 'blur(5px)',
                         mb: 3,
                       }}>
                         <Typography sx={{ 
-                          color: '#FFFFFF', 
+                          color: colors.textPrimary, 
                           fontWeight: 600, 
                           mb: 1.5,
                           fontSize: '0.9rem',

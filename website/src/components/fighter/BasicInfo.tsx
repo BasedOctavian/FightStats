@@ -6,6 +6,7 @@ import { useBasicInfo } from '../../hooks/stats/useBasicInfo';
 import { useFighterFights } from '../../hooks/useFights';
 import { useFightersByIds } from '../../hooks/useFighters';
 import { useFighterCombinedDifficultyScore } from '../../hooks/useDifficultyScore';
+import { colors } from '../../theme/colors';
 
 
 interface BasicInfoProps {
@@ -122,16 +123,16 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
     card: {
       p: 3,
       borderRadius: '12px',
-      bgcolor: 'rgba(10, 14, 23, 0.4)',
-      border: '1px solid rgba(0, 240, 255, 0.15)',
+      bgcolor: colors.backgroundTertiary,
+      border: `1px solid ${colors.borderSecondary}`,
       height: '100%',
       position: 'relative' as const,
       overflow: 'hidden',
       transition: 'all 0.3s ease',
       '&:hover': {
-        bgcolor: 'rgba(10, 14, 23, 0.6)',
+        bgcolor: colors.backgroundSecondary,
         transform: 'translateY(-2px)',
-        border: '1px solid rgba(0, 240, 255, 0.3)',
+        border: `1px solid ${colors.borderTertiary}`,
         '& .rating-icon': {
           transform: 'scale(1.1)',
         },
@@ -146,7 +147,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
         left: 0,
         right: 0,
         height: '1px',
-        background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+        background: `linear-gradient(90deg, ${colors.primary}, ${colors.primaryDark})`,
         opacity: 0.5,
       }
     },
@@ -167,14 +168,14 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, rgba(10, 14, 23, 0.9), rgba(10, 14, 23, 0.7))',
-      border: '1px solid rgba(0, 240, 255, 0.2)',
+      background: `linear-gradient(135deg, ${colors.backgroundTertiary}, ${colors.backgroundSecondary})`,
+      border: `1px solid ${colors.borderPrimary}`,
       transition: 'transform 0.3s ease',
     },
 
     // Title styling
     title: {
-      color: '#fff',
+      color: colors.textPrimary,
       fontWeight: 600,
       fontSize: '1.1rem',
       textTransform: 'uppercase' as const,
@@ -190,14 +191,14 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
     ratingValue: {
       fontSize: '2rem',
       fontWeight: 700,
-      color: '#00F0FF',
-      textShadow: '0 0 20px rgba(0, 240, 255, 0.4)',
+      color: colors.primary,
+      textShadow: `0 0 20px ${colors.shadowSecondary}`,
       fontFamily: 'monospace',
     },
 
     // Rating unit styling
     ratingUnit: {
-      color: 'rgba(255, 255, 255, 0.7)',
+      color: colors.textTertiary,
       fontFamily: 'monospace',
     },
 
@@ -205,14 +206,14 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
     weightClassComparison: {
       mb: 2,
       p: 2,
-      bgcolor: 'rgba(10, 14, 23, 0.6)',
+      bgcolor: colors.backgroundSecondary,
       borderRadius: '8px',
-      border: '1px solid rgba(255, 56, 100, 0.1)',
+      border: `1px solid ${colors.errorBackground}`,
     },
 
     // Weight class label
     weightClassLabel: {
-      color: 'rgba(255, 255, 255, 0.9)',
+      color: colors.textSecondary,
       fontSize: '0.85rem',
       mb: 0.5,
       fontWeight: 500,
@@ -220,14 +221,14 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
 
     // Weight class value
     weightClassValue: {
-      color: '#FF3864',
+      color: colors.error,
       fontSize: '0.9rem',
       fontFamily: 'monospace',
     },
 
     // Description
     description: {
-      color: 'rgba(255, 255, 255, 0.5)',
+      color: colors.textMuted,
       fontSize: '0.9rem',
       mb: 2,
       fontStyle: 'italic',
@@ -240,7 +241,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
 
     // Progress bar label
     progressLabel: {
-      color: 'rgba(255, 255, 255, 0.9)',
+      color: colors.textSecondary,
       mb: 1,
       fontSize: '0.9rem',
       display: 'flex',
@@ -252,8 +253,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
     progressBar: {
       height: 8,
       borderRadius: 4,
-      bgcolor: 'rgba(10, 14, 23, 0.6)',
-      border: '1px solid rgba(0, 240, 255, 0.1)',
+      bgcolor: colors.backgroundSecondary,
+      border: `1px solid ${colors.borderSecondary}`,
       overflow: 'hidden',
       transition: 'transform 0.3s ease',
       position: 'relative' as const,
@@ -262,7 +263,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
     // Progress bar fill
     progressFill: {
       height: '100%',
-      background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+      background: `linear-gradient(90deg, ${colors.primary}, ${colors.primaryDark})`,
       borderRadius: 4,
       transition: 'width 0.3s ease',
       position: 'relative' as const,
@@ -273,7 +274,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
         right: 0,
         width: '4px',
         height: '100%',
-        background: '#fff',
+        background: colors.textPrimary,
         opacity: 0.5,
         filter: 'blur(2px)',
       }
@@ -281,30 +282,30 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
 
     // Overall rating specific styles
     overallCard: {
-      background: 'linear-gradient(145deg, rgba(20, 25, 40, 0.98) 0%, rgba(30, 40, 60, 0.95) 100%)',
-      border: '2px solid rgba(0, 150, 255, 0.3)',
-      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 150, 255, 0.15), 0 0 60px rgba(0, 150, 255, 0.1)',
+      background: `linear-gradient(145deg, ${colors.backgroundTertiary}, ${colors.backgroundSecondary})`,
+      border: `2px solid ${colors.borderTertiary}`,
+      boxShadow: `0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px ${colors.borderSecondary}, 0 0 60px ${colors.shadowPrimary}`,
       '&:hover': {
-        border: '2px solid rgba(0, 150, 255, 0.5)',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 150, 255, 0.25), 0 0 80px rgba(0, 150, 255, 0.15)',
+        border: `2px solid ${colors.borderTertiary}`,
+        boxShadow: `0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px ${colors.borderPrimary}, 0 0 80px ${colors.shadowSecondary}`,
       }
     },
 
     overallValue: {
       fontSize: { xs: '3.5rem', sm: '4rem' },
       fontWeight: 900,
-      background: 'linear-gradient(135deg, #FFFFFF 0%, #00F0FF 30%, #0096FF 70%, #0066FF 100%)',
+      background: `linear-gradient(135deg, ${colors.textPrimary} 0%, ${colors.primary} 30%, ${colors.primaryLight} 70%, ${colors.primaryDark} 100%)`,
       backgroundClip: 'text',
       WebkitBackgroundClip: 'text',
       WebkitTextFillColor: 'transparent',
-      textShadow: '0 0 40px rgba(255, 255, 255, 0.6)',
+      textShadow: `0 0 40px ${colors.shadowSecondary}`,
       fontFamily: '"Orbitron", "Roboto", sans-serif',
       letterSpacing: '0.15em',
       mb: 1,
     },
 
     overallLabel: {
-      color: '#FFFFFF',
+      color: colors.textPrimary,
       fontSize: '1rem',
       fontWeight: 700,
       textTransform: 'uppercase' as const,
@@ -315,7 +316,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
 
     // Circular progress styling
     circularProgress: {
-      color: '#00F0FF',
+      color: colors.primary,
       filter: 'drop-shadow(0 0 15px rgba(0, 240, 255, 0.5))',
       '& .MuiCircularProgress-circle': {
         strokeLinecap: 'round',
@@ -325,11 +326,11 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
 
     // Archetype styling
     archetype: {
-      color: '#FFFFFF',
+      color: colors.textPrimary,
       fontWeight: 800,
       textTransform: 'uppercase' as const,
       letterSpacing: '0.15em',
-      textShadow: '0 0 20px rgba(255, 255, 255, 0.4)',
+                      textShadow: `0 0 20px ${colors.textPrimary}66`,
       fontSize: '1.5rem',
       mb: 2,
     },
@@ -359,7 +360,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
     },
 
     strengthText: {
-      color: '#FFFFFF',
+      color: colors.textPrimary,
       fontSize: '0.75rem',
       fontWeight: 600,
       letterSpacing: '0.05em',
@@ -410,11 +411,11 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
             const submissiveEvents = pushedBackToCage + beingClinched + onBottomGround;
             
             return (
-              <Box sx={{ mt: 1, pt: 1, borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                <Typography sx={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '0.75rem', mb: 0.5 }}>
+                              <Box sx={{ mt: 1, pt: 1, borderTop: `1px solid ${colors.textPrimary}1A` }}>
+                <Typography sx={{ color: colors.textSecondary, fontSize: '0.75rem', mb: 0.5 }}>
                   <strong>Dominant:</strong> {((dominantEvents/totalEvents)*100).toFixed(0)}%
                 </Typography>
-                <Typography sx={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '0.75rem' }}>
+                <Typography sx={{ color: colors.textSecondary, fontSize: '0.75rem' }}>
                   <strong>Defensive:</strong> {((submissiveEvents/totalEvents)*100).toFixed(0)}%
                 </Typography>
               </Box>
@@ -436,16 +437,16 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
             boxShadow: '0 4px 12px rgba(0, 240, 255, 0.1)',
           }}
         >
-          <Typography sx={{ color: '#00F0FF', fontWeight: 600, mb: 1 }}>
+          <Typography sx={{ color: colors.primary, fontWeight: 600, mb: 1 }}>
             {data.subject}
           </Typography>
-          <Typography sx={{ color: '#fff', fontSize: '0.9rem', mb: 1 }}>
+          <Typography sx={{ color: colors.textPrimary, fontSize: '0.9rem', mb: 1 }}>
             Fighter: {(data.subject === 'Striking' || data.subject === 'Aggression' || data.subject === 'Takedowns' || data.subject === 'Defense' || data.subject === 'Finishes' || data.subject === 'Position') ? data.value.toFixed(0) : data.value.toFixed(1) + '%'}
           </Typography>
-          <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.9rem', mb: 1 }}>
+          <Typography sx={{ color: colors.textTertiary, fontSize: '0.9rem', mb: 1 }}>
             {(data.subject === 'Striking' || data.subject === 'Aggression' || data.subject === 'Takedowns' || data.subject === 'Defense' || data.subject === 'Finishes' || data.subject === 'Position') ? 'Weight Class Avg: 50' : `UFC Avg: ${data.ufc_average}%`}
           </Typography>
-          <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.8rem' }}>
+          <Typography sx={{ color: colors.textMuted, fontSize: '0.8rem' }}>
             {data.description}
           </Typography>
           {getPositionalBreakdown()}
@@ -458,7 +459,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
   // Common styles
   const sectionHeaderStyle = {
     mb: 3,
-    color: '#fff',
+    color: colors.textPrimary,
     fontWeight: 600,
     fontSize: '1.25rem',
     textTransform: 'uppercase',
@@ -472,7 +473,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
       left: 0,
       width: '60%',
       height: '2px',
-      background: 'linear-gradient(90deg, rgba(0, 240, 255, 0.7), transparent)',
+      background: `linear-gradient(90deg, ${colors.primary}, transparent)`,
     }
   };
 
@@ -495,7 +496,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
           </Typography>
           <Typography 
             sx={{ 
-              color: 'rgba(255, 255, 255, 0.7)',
+              color: colors.textTertiary,
               fontSize: '0.9rem',
               mt: 1,
               position: 'relative',
@@ -508,7 +509,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                 width: '4px',
                 height: '50%',
                 transform: 'translateY(-50%)',
-                background: 'linear-gradient(180deg, #00F0FF, transparent)',
+                background: `linear-gradient(180deg, ${colors.primary}, transparent)`,
                 borderRadius: '2px',
               }
             }}
@@ -524,41 +525,41 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
             <ResponsiveContainer>
               <RadarChart data={radarData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
                 <PolarGrid 
-                  stroke="rgba(0, 240, 255, 0.1)"
+                  stroke={`${colors.primary}1A`}
                   gridType="circle"
                 />
                 <PolarAngleAxis 
                   dataKey="subject" 
                   tick={{ 
-                    fill: '#fff',
+                    fill: colors.textPrimary,
                     fontSize: 12,
                     fontWeight: 500,
                   }}
-                  stroke="rgba(0, 240, 255, 0.2)"
+                  stroke={`${colors.primary}33`}
                 />
                 <PolarRadiusAxis 
                   angle={90} 
                   domain={[0, 100]}
                   tick={{ 
-                    fill: 'rgba(255, 255, 255, 0.5)',
+                    fill: colors.textMuted,
                     fontSize: 10 
                   }}
-                  stroke="rgba(0, 240, 255, 0.1)"
+                  stroke={`${colors.primary}1A`}
                 />
                 {/* UFC Average Radar */}
                 <Radar
                   name="UFC Average"
                   dataKey="ufc_average"
-                  stroke="#FF3864"
-                  fill="#FF3864"
+                  stroke={colors.error}
+                  fill={colors.error}
                   fillOpacity={0.15}
                 />
                 {/* Fighter Stats Radar */}
                 <Radar
                   name="Fighter Stats"
                   dataKey="value"
-                  stroke="#8B5CF6"
-                  fill="#8B5CF6"
+                  stroke={colors.primary}
+                  fill={colors.primary}
                   fillOpacity={0.3}
                 />
                 <RechartsTooltip content={<CustomTooltip />} />
@@ -584,15 +585,15 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                 <Box sx={{ 
                   width: 12, 
                   height: 12, 
-                  bgcolor: '#8B5CF6',
+                  bgcolor: colors.primary,
                   borderRadius: '50%',
-                  boxShadow: '0 0 10px rgba(139, 92, 246, 0.5)',
+                  boxShadow: `0 0 10px ${colors.primary}80`,
                 }} />
-                <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>Fighter</Typography>
+                <Typography sx={{ color: colors.textPrimary, fontSize: '0.8rem' }}>Fighter</Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ width: 12, height: 12, bgcolor: '#FF3864', borderRadius: '50%', opacity: 0.8 }} />
-                <Typography sx={{ color: '#fff', fontSize: '0.8rem' }}>UFC Average</Typography>
+                <Box sx={{ width: 12, height: 12, bgcolor: colors.error, borderRadius: '50%', opacity: 0.8 }} />
+                <Typography sx={{ color: colors.textPrimary, fontSize: '0.8rem' }}>UFC Average</Typography>
               </Box>
             </Box>
           </Box>
@@ -613,7 +614,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
           >
             <Typography 
               sx={{ 
-                color: 'rgba(255, 255, 255, 0.7)',
+                color: colors.textTertiary,
                 textAlign: 'center',
                 maxWidth: 400,
               }}
@@ -623,10 +624,10 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
             </Typography>
             <Typography 
               sx={{ 
-                color: '#00F0FF',
+                color: colors.primary,
                 fontSize: '0.9rem',
                 fontWeight: 500,
-                textShadow: '0 0 10px rgba(0, 240, 255, 0.3)',
+                textShadow: `0 0 10px ${colors.primary}4D`,
               }}
             >
               Current fights tracked: {fighter.FightsTracked || 0}
@@ -646,7 +647,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
         </Typography>
         <Typography 
           sx={{ 
-            color: 'rgba(255, 255, 255, 0.7)',
+            color: colors.textTertiary,
             mb: 4,
             fontSize: '0.9rem',
             position: 'relative',
@@ -659,7 +660,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
               width: '4px',
               height: '50%',
               transform: 'translateY(-50%)',
-              background: 'linear-gradient(180deg, #00F0FF, transparent)',
+              background: `linear-gradient(180deg, ${colors.primary}, transparent)`,
               borderRadius: '2px',
             }
           }}
@@ -683,8 +684,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                   width: '12px',
                   height: '12px',
                   borderRadius: '50%',
-                  background: '#00F0FF',
-                  boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                  background: colors.primary,
+                  boxShadow: `0 0 10px ${colors.primary}80`,
                 },
                 '&::after': {
                   content: '""',
@@ -695,15 +696,15 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                   width: '20px',
                   height: '20px',
                   borderRadius: '50%',
-                  border: '2px solid #00F0FF',
+                  border: `2px solid ${colors.primary}`,
                   opacity: 0.5,
                 }
               }}/>,
               value: calculateKOTKOWinPercentage(),
               avgValue: weightClassStats.koTkoWinPercentage,
-              color: '#00F0FF',
+              color: colors.primary,
               description: 'Percentage of wins by KO/TKO',
-              gradient: 'linear-gradient(90deg, #00F0FF, #0066FF)'
+              gradient: `linear-gradient(90deg, ${colors.primary}, ${colors.primaryDark})`
             },
             { 
               label: 'Decision Wins',
@@ -719,15 +720,15 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                   transform: 'translate(-50%, -50%)',
                   width: '16px',
                   height: '16px',
-                  border: '2px solid #00F0FF',
+                  border: `2px solid ${colors.primary}`,
                   clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
                 }
               }}/>,
               value: calculateDecisionWinPercentage(),
               avgValue: weightClassStats.decisionWinPercentage,
-              color: '#00F0FF',
+              color: colors.primary,
               description: 'Percentage of wins by decision',
-              gradient: 'linear-gradient(90deg, #00F0FF, #0066FF)'
+              gradient: `linear-gradient(90deg, ${colors.primary}, ${colors.primaryDark})`
             },
             { 
               label: 'KO/TKO Losses',
@@ -743,8 +744,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                   transform: 'translate(-50%, -50%)',
                   width: '16px',
                   height: '2px',
-                  background: '#FF3864',
-                  boxShadow: '0 0 10px rgba(255, 56, 100, 0.5)',
+                  background: colors.error,
+                  boxShadow: `0 0 10px ${colors.error}80`,
                 },
                 '&::after': {
                   content: '""',
@@ -754,15 +755,15 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                   transform: 'translate(-50%, -50%)',
                   width: '2px',
                   height: '16px',
-                  background: '#FF3864',
-                  boxShadow: '0 0 10px rgba(255, 56, 100, 0.5)',
+                  background: colors.error,
+                  boxShadow: `0 0 10px ${colors.error}80`,
                 }
               }}/>,
               value: calculateKOTKOLossPercentage(),
               avgValue: weightClassStats.koTkoLossPercentage,
-              color: '#FF3864',
+              color: colors.error,
               description: 'Percentage of losses by KO/TKO',
-              gradient: 'linear-gradient(90deg, #FF3864, #CC1F41)'
+              gradient: `linear-gradient(90deg, ${colors.error}, ${colors.error}CC)`
             },
             { 
               label: 'Submission Losses',
@@ -778,16 +779,16 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                   transform: 'translate(-50%, -50%)',
                   width: '16px',
                   height: '16px',
-                  border: '2px solid #FF3864',
+                  border: `2px solid ${colors.error}`,
                   borderRadius: '4px',
-                  boxShadow: '0 0 10px rgba(255, 56, 100, 0.3)',
+                  boxShadow: `0 0 10px ${colors.error}4D`,
                 }
               }}/>,
               value: calculateSubmissionLossPercentage(),
               avgValue: weightClassStats.submissionLossPercentage,
-              color: '#FF3864',
+              color: colors.error,
               description: 'Percentage of losses by submission',
-              gradient: 'linear-gradient(90deg, #FF3864, #CC1F41)'
+              gradient: `linear-gradient(90deg, ${colors.error}, ${colors.error}CC)`
             },
             { 
               label: 'Decision Losses',
@@ -803,16 +804,16 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                   transform: 'translate(-50%, -50%)',
                   width: '16px',
                   height: '16px',
-                  border: '2px solid #FF3864',
+                  border: `2px solid ${colors.error}`,
                   borderRadius: '50%',
-                  boxShadow: '0 0 10px rgba(255, 56, 100, 0.3)',
+                  boxShadow: `0 0 10px ${colors.error}4D`,
                 }
               }}/>,
               value: calculateDecisionLossPercentage(),
               avgValue: weightClassStats.decisionLossPercentage,
-              color: '#FF3864',
+              color: colors.error,
               description: 'Percentage of losses by decision',
-              gradient: 'linear-gradient(90deg, #FF3864, #CC1F41)'
+              gradient: `linear-gradient(90deg, ${colors.error}, ${colors.error}CC)`
             },
             { 
               label: 'vs Orthodox',
@@ -829,8 +830,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                   width: '12px',
                   height: '12px',
                   borderRadius: '50%',
-                  background: '#00F0FF',
-                  boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                  background: colors.primary,
+                  boxShadow: `0 0 10px ${colors.primary}80`,
                 },
                 '&::after': {
                   content: '""',
@@ -841,7 +842,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                   width: '20px',
                   height: '20px',
                   borderRadius: '50%',
-                  border: '2px solid #00F0FF',
+                  border: `2px solid ${colors.primary}`,
                   opacity: 0.5,
                 }
               }}/>,
@@ -851,9 +852,9 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                 fighter.stance_matchup_stats?.WinsVsOrthodox,
                 fighter.stance_matchup_stats?.LossesVsOrthodox
               ),
-              color: '#00F0FF',
+              color: colors.primary,
               description: 'Win rate against orthodox fighters',
-              gradient: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+              gradient: `linear-gradient(90deg, ${colors.primary}, ${colors.primaryDark})`,
               isStance: true
             }
           ].map((outcome) => (
@@ -908,7 +909,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                   </Box>
                   <Typography 
                     sx={{ 
-                      color: '#fff',
+                      color: colors.textPrimary,
                       fontWeight: 600,
                       fontSize: '1rem',
                       textTransform: 'uppercase',
@@ -934,7 +935,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                       {outcome.value.toFixed(1)}
                     </Typography>
                     <Typography sx={{ 
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: colors.textTertiary,
                       fontFamily: 'monospace',
                     }}>
                       %
@@ -951,7 +952,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                       border: '1px solid rgba(255, 56, 100, 0.1)',
                     }}>
                       <Typography sx={{ 
-                        color: 'rgba(255, 255, 255, 0.9)',
+                        color: colors.textSecondary,
                         fontSize: '0.85rem',
                         mb: 0.5,
                         fontWeight: 500,
@@ -959,7 +960,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                         Weight Class Average:
                       </Typography>
                       <Typography sx={{ 
-                        color: '#FF3864',
+                        color: colors.error,
                         fontSize: '0.9rem',
                         fontFamily: 'monospace',
                       }}>
@@ -970,7 +971,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                   
                   <Typography 
                     sx={{ 
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      color: colors.textMuted,
                       fontSize: '0.9rem',
                       mb: 2,
                       fontStyle: 'italic',
@@ -984,7 +985,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                 <Box sx={{ position: 'relative' }}>
                   <Typography 
                     sx={{ 
-                      color: 'rgba(255, 255, 255, 0.9)',
+                      color: colors.textSecondary,
                       mb: 1,
                       fontSize: '0.9rem',
                       display: 'flex',
@@ -1024,7 +1025,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                           right: 0,
                           width: '4px',
                           height: '100%',
-                          background: '#fff',
+                          background: colors.textPrimary,
                           opacity: 0.5,
                           filter: 'blur(2px)',
                         }
@@ -1037,7 +1038,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                     <>
                       <Typography 
                         sx={{ 
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: colors.textTertiary,
                           mb: 1,
                           fontSize: '0.85rem',
                           display: 'flex',
@@ -1046,7 +1047,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                         }}
                       >
                         <span>Class Average</span>
-                        <span style={{ color: '#FF3864' }}>
+                        <span style={{ color: colors.error }}>
                           {outcome.avgValue.toFixed(1)}%
                         </span>
                       </Typography>
@@ -1064,7 +1065,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                           sx={{
                             width: `${outcome.avgValue}%`,
                             height: '100%',
-                            background: 'linear-gradient(90deg, #FF3864, #CC1F41)',
+                            background: `linear-gradient(90deg, ${colors.error}, ${colors.error}CC)`,
                             borderRadius: 3,
                             transition: 'width 0.3s ease',
                             opacity: 0.8,
@@ -1077,7 +1078,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                   {/* Stance-specific info */}
                   {outcome.isStance && outcome.fights && (
                     <Typography sx={{ 
-                      color: 'rgba(255, 255, 255, 0.5)', 
+                      color: colors.textMuted, 
                       fontSize: '0.8rem', 
                       mt: 1,
                       fontStyle: 'italic'
@@ -1110,7 +1111,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
           borderRadius: '12px',
           position: 'relative',
           overflow: 'hidden',
-          border: '1px solid rgba(0, 240, 255, 0.1)',
+          border: `1px solid ${colors.borderSecondary}`,
           '&::before': {
             content: '""',
             position: 'absolute',
@@ -1118,7 +1119,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
             left: 0,
             width: '100%',
             height: '3px',
-            background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+            background: `linear-gradient(90deg, ${colors.primary}, ${colors.primaryDark})`,
           }
         }}
       >
@@ -1133,18 +1134,18 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
               width: 40,
               height: 40,
               mr: 2,
-              filter: 'drop-shadow(0 0 8px rgba(0, 240, 255, 0.3))',
+              filter: `drop-shadow(0 0 8px ${colors.primary}4D)`,
             }}
           />
           <Typography 
             variant="h4" 
             sx={{ 
               fontWeight: 700,
-              color: '#fff',
-              fontSize: { xs: '1.75rem', sm: '2rem' },
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              textShadow: '0 0 20px rgba(0, 240, 255, 0.3)',
+                          color: colors.textPrimary,
+            fontSize: { xs: '1.75rem', sm: '2rem' },
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            textShadow: `0 0 20px ${colors.primary}4D`,
             }}
           >
             Fighter Analytics
@@ -1153,21 +1154,21 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
         <Typography 
           variant="subtitle1" 
           sx={{ 
-            color: 'rgba(255, 255, 255, 0.7)',
-            maxWidth: '600px',
-            position: 'relative',
-            pl: 2,
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              left: 0,
-              top: '50%',
-              width: '4px',
-              height: '50%',
-              transform: 'translateY(-50%)',
-              background: 'linear-gradient(180deg, #00F0FF, transparent)',
-              borderRadius: '2px',
-            }
+                      color: colors.textTertiary,
+          maxWidth: '600px',
+          position: 'relative',
+          pl: 2,
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            left: 0,
+            top: '50%',
+            width: '4px',
+            height: '50%',
+            transform: 'translateY(-50%)',
+            background: `linear-gradient(180deg, ${colors.primary}, transparent)`,
+            borderRadius: '2px',
+          }
           }}
         >
           Comprehensive analysis based on {fighter.FightsTracked || 0} fights and {fighter.RoundsTracked || 0} rounds of data
@@ -1211,9 +1212,9 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                     transform: 'translate(-50%, -50%)',
                     width: '16px',
                     height: '16px',
-                    background: '#00F0FF',
+                    background: colors.primary,
                     borderRadius: '50%',
-                    boxShadow: '0 0 12px rgba(0, 240, 255, 0.5)',
+                    boxShadow: `0 0 12px ${colors.primary}80`,
                   },
                   '&::after': {
                     content: '""',
@@ -1223,7 +1224,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                     transform: 'translate(-50%, -50%)',
                     width: '28px',
                     height: '28px',
-                    border: '2px solid #00F0FF',
+                    border: `2px solid ${colors.primary}`,
                     borderRadius: '50%',
                     opacity: 0.3,
                   }
@@ -1262,7 +1263,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                       width: '120px',
                       height: '120px',
                       borderRadius: '50%',
-                      background: 'conic-gradient(from 0deg, #00F0FF 0deg, #00F0FF ' + (adjustedRating.rating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) ' + (adjustedRating.rating * 3.6) + 'deg, rgba(0, 240, 255, 0.1) 360deg)',
+                      background: `conic-gradient(from 0deg, ${colors.primary} 0deg, ${colors.primary} ` + (adjustedRating.rating * 3.6) + `deg, ${colors.primary}1A ` + (adjustedRating.rating * 3.6) + `deg, ${colors.primary}1A 360deg)`,
                       zIndex: 1,
                     },
                     '&::after': {
@@ -1292,18 +1293,18 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                         sx={{
                           fontSize: '2.2rem',
                           fontWeight: 800,
-                          color: '#00F0FF',
+                          color: colors.primary,
                           fontFamily: '"Orbitron", "Roboto Mono", monospace',
                           letterSpacing: '0.1em',
                           lineHeight: 1,
-                          textShadow: '0 0 15px rgba(0, 240, 255, 0.5)',
+                          textShadow: `0 0 15px ${colors.primary}80`,
                         }}
                       >
                         {adjustedRating.rating}
                       </Typography>
                       <Typography
                         sx={{
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: colors.textTertiary,
                           fontSize: '0.75rem',
                           fontWeight: 600,
                           textTransform: 'uppercase',
@@ -1327,7 +1328,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                     width: '160px',
                     height: '160px',
                     borderRadius: '50%',
-                    background: 'radial-gradient(circle, rgba(0, 240, 255, 0.1) 0%, transparent 70%)',
+                    background: `radial-gradient(circle, ${colors.primary}1A 0%, transparent 70%)`,
                     zIndex: 0,
                     filter: 'blur(8px)',
                   }} />
@@ -1341,11 +1342,11 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                 {/* Archetype */}
                 <Typography 
                   sx={{
-                    color: '#FFFFFF',
+                    color: colors.textPrimary,
                     fontWeight: 700,
                     textTransform: 'uppercase',
                     letterSpacing: '0.1em',
-                    textShadow: '0 0 15px rgba(255, 255, 255, 0.3)',
+                    textShadow: `0 0 15px ${colors.textPrimary}4D`,
                     fontSize: '1.2rem',
                     mb: 2,
                   }}
@@ -1371,7 +1372,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                   backdropFilter: 'blur(5px)',
                 }}>
                   <Typography sx={{ 
-                    color: '#FFFFFF', 
+                    color: colors.textPrimary, 
                     fontWeight: 600, 
                     mb: 1.5,
                     fontSize: '0.9rem',
@@ -1399,7 +1400,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                         }}
                       >
                         <Typography sx={{
-                          color: '#FFFFFF',
+                          color: colors.textPrimary,
                           fontSize: '0.75rem',
                           fontWeight: 500,
                           letterSpacing: '0.03em',
@@ -1448,8 +1449,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                           width: '12px',
                           height: '12px',
                           borderRadius: '50%',
-                          background: '#00F0FF',
-                          boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                          background: colors.primary,
+                          boxShadow: `0 0 10px ${colors.primary}80`,
                         },
                         '&::after': {
                           content: '""',
@@ -1460,7 +1461,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                           width: '20px',
                           height: '20px',
                           borderRadius: '50%',
-                          border: '2px solid #00F0FF',
+                          border: `2px solid ${colors.primary}`,
                           opacity: 0.5,
                         }
                       }}/>
@@ -1502,7 +1503,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                   <Box sx={ratingCardStyles.progressContainer}>
                     <Typography sx={ratingCardStyles.progressLabel}>
                       <span>Fighter Rating</span>
-                      <span style={{ color: '#00F0FF' }}>
+                      <span style={{ color: colors.primary }}>
                         {calculateStrikingRating()}%
                       </span>
                     </Typography>
@@ -1549,7 +1550,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                             transform: 'translate(-50%, -50%)',
                             width: '16px',
                             height: '16px',
-                            border: '2px solid #00F0FF',
+                            border: `2px solid ${colors.primary}`,
                             clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
                           }
                         }}/>
@@ -1592,7 +1593,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                       <Box sx={ratingCardStyles.progressContainer}>
                         <Typography sx={ratingCardStyles.progressLabel}>
                           <span>Fighter Rating</span>
-                          <span style={{ color: '#00F0FF' }}>
+                          <span style={{ color: colors.primary }}>
                             {aggressivenessRating}%
                           </span>
                         </Typography>
@@ -1999,7 +2000,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
             </Typography>
             <Typography 
               sx={{ 
-                color: 'rgba(255, 255, 255, 0.7)',
+                color: colors.textTertiary,
                 mb: 4,
                 fontSize: '0.9rem',
                 position: 'relative',
@@ -2012,7 +2013,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                   width: '4px',
                   height: '50%',
                   transform: 'translateY(-50%)',
-                  background: 'linear-gradient(180deg, #00F0FF, transparent)',
+                  background: `linear-gradient(180deg, ${colors.primary}, transparent)`,
                   borderRadius: '2px',
                 }
               }}
@@ -2036,8 +2037,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                       width: '12px',
                       height: '12px',
                       borderRadius: '50%',
-                      background: '#00F0FF',
-                      boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                      background: colors.primary,
+                      boxShadow: `0 0 10px ${colors.primary}80`,
                     },
                     '&::after': {
                       content: '""',
@@ -2048,7 +2049,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                       width: '20px',
                       height: '20px',
                       borderRadius: '50%',
-                      border: '2px solid #00F0FF',
+                      border: `2px solid ${colors.primary}`,
                       opacity: 0.5,
                     }
                   }}/>,
@@ -2056,9 +2057,9 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                   total: strikesPerMinute.stand.thrown,
                   weightClassValue: weightClassStrikesPerMinute.stand.landed,
                   weightClassTotal: weightClassStrikesPerMinute.stand.thrown,
-                  color: '#00F0FF',
+                  color: colors.primary,
                   description: 'Strikes thrown while standing',
-                  gradient: 'linear-gradient(90deg, #00F0FF, #0066FF)'
+                  gradient: `linear-gradient(90deg, ${colors.primary}, ${colors.primaryDark})`
                 },
                 { 
                   label: 'Clinch',
@@ -2074,17 +2075,17 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                       transform: 'translate(-50%, -50%)',
                       width: '16px',
                       height: '16px',
-                      border: '2px solid #00F0FF',
-                      clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-                    }
-                  }}/>,
-                  value: strikesPerMinute.clinch.landed,
-                  total: strikesPerMinute.clinch.thrown,
-                  weightClassValue: weightClassStrikesPerMinute.clinch.landed,
-                  weightClassTotal: weightClassStrikesPerMinute.clinch.thrown,
-                  color: '#00F0FF',
-                  description: 'Strikes thrown in clinch position',
-                  gradient: 'linear-gradient(90deg, #00F0FF, #0066FF)'
+                                          border: `2px solid ${colors.primary}`,
+                    clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+                  }
+                }}/>,
+                value: strikesPerMinute.clinch.landed,
+                total: strikesPerMinute.clinch.thrown,
+                weightClassValue: weightClassStrikesPerMinute.clinch.landed,
+                weightClassTotal: weightClassStrikesPerMinute.clinch.thrown,
+                color: colors.primary,
+                description: 'Strikes thrown in clinch position',
+                gradient: `linear-gradient(90deg, ${colors.primary}, ${colors.primaryDark})`
                 },
                 { 
                   label: 'Ground',
@@ -2100,8 +2101,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                       transform: 'translate(-50%, -50%)',
                       width: '16px',
                       height: '2px',
-                      background: '#00F0FF',
-                      boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                      background: colors.primary,
+                      boxShadow: `0 0 10px ${colors.primary}80`,
                     },
                     '&::after': {
                       content: '""',
@@ -2111,17 +2112,17 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                       transform: 'translate(-50%, -50%)',
                       width: '2px',
                       height: '16px',
-                      background: '#00F0FF',
-                      boxShadow: '0 0 10px rgba(0, 240, 255, 0.5)',
+                      background: colors.primary,
+                      boxShadow: `0 0 10px ${colors.primary}80`,
                     }
                   }}/>,
                   value: strikesPerMinute.ground.landed,
                   total: strikesPerMinute.ground.thrown,
                   weightClassValue: weightClassStrikesPerMinute.ground.landed,
                   weightClassTotal: weightClassStrikesPerMinute.ground.thrown,
-                  color: '#00F0FF',
+                  color: colors.primary,
                   description: 'Strikes thrown on the ground',
-                  gradient: 'linear-gradient(90deg, #00F0FF, #0066FF)'
+                  gradient: `linear-gradient(90deg, ${colors.primary}, ${colors.primaryDark})`
                 }
               ].map((strike) => (
                 <Grid item xs={12} md={4} key={strike.label}>
@@ -2178,7 +2179,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                       </Box>
                       <Typography 
                         sx={{ 
-                          color: '#fff',
+                          color: colors.textPrimary,
                           fontWeight: 600,
                           fontSize: '1.1rem',
                           textTransform: 'uppercase',
@@ -2204,7 +2205,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                           {strike.value.toFixed(1)}
                         </Typography>
                         <Typography sx={{ 
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: colors.textTertiary,
                           fontFamily: 'monospace',
                         }}>
                           / {strike.total.toFixed(1)} per min
@@ -2221,7 +2222,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                           border: '1px solid rgba(255, 56, 100, 0.1)',
                         }}>
                           <Typography sx={{ 
-                            color: 'rgba(255, 255, 255, 0.9)',
+                            color: colors.textSecondary,
                             fontSize: '0.85rem',
                             mb: 0.5,
                             fontWeight: 500,
@@ -2229,7 +2230,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                             Weight Class Average:
                           </Typography>
                           <Typography sx={{ 
-                            color: '#FF3864',
+                            color: colors.error,
                             fontSize: '0.9rem',
                             fontFamily: 'monospace',
                           }}>
@@ -2240,7 +2241,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                       
                       <Typography 
                         sx={{ 
-                          color: 'rgba(255, 255, 255, 0.5)',
+                          color: colors.textMuted,
                           fontSize: '0.9rem',
                           mb: 2,
                           fontStyle: 'italic',
@@ -2254,7 +2255,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                     <Box sx={{ position: 'relative' }}>
                       <Typography 
                         sx={{ 
-                          color: 'rgba(255, 255, 255, 0.9)',
+                          color: colors.textSecondary,
                           mb: 1,
                           fontSize: '0.9rem',
                           display: 'flex',
@@ -2295,9 +2296,9 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                               right: 0,
                               width: '4px',
                               height: '100%',
-                              background: '#fff',
-                              opacity: 0.5,
-                              filter: 'blur(2px)',
+                                                        background: colors.textPrimary,
+                          opacity: 0.5,
+                          filter: 'blur(2px)',
                             }
                           }}
                         />
@@ -2308,7 +2309,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                         <>
                           <Typography 
                             sx={{ 
-                              color: 'rgba(255, 255, 255, 0.7)',
+                              color: colors.textTertiary,
                               mb: 1,
                               fontSize: '0.85rem',
                               display: 'flex',
@@ -2317,7 +2318,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                             }}
                           >
                             <span>Class Average</span>
-                            <span style={{ color: '#FF3864' }}>
+                            <span style={{ color: colors.error }}>
                               {strike.weightClassTotal > 0 ? Math.round((strike.weightClassValue / strike.weightClassTotal) * 100) : 0}%
                             </span>
                           </Typography>
@@ -2335,7 +2336,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ fighter, weightClassAvgData, figh
                               sx={{
                                 width: `${strike.weightClassTotal > 0 ? (strike.weightClassValue / strike.weightClassTotal) * 100 : 0}%`,
                                 height: '100%',
-                                background: 'linear-gradient(90deg, #FF3864, #CC1F41)',
+                                background: `linear-gradient(90deg, ${colors.error}, ${colors.error}CC)`,
                                 borderRadius: 3,
                                 transition: 'width 0.3s ease',
                                 opacity: 0.8,

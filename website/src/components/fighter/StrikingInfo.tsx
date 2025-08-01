@@ -5,6 +5,7 @@ import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Responsi
 import { Fighter } from '../../types/firestore';
 import { useBasicInfo } from '../../hooks/stats/useBasicInfo';
 import { useStrikingInfo } from '../../hooks/stats/useStrikingInfo';
+import { colors } from '../../theme/colors';
 
 interface StrikingInfoProps {
   fighter: Fighter;
@@ -83,25 +84,25 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
       return (
         <Box
           sx={{
-            bgcolor: 'rgba(10, 14, 23, 0.95)',
-            border: '1px solid rgba(0, 240, 255, 0.3)',
+            bgcolor: colors.backgroundTertiary,
+            border: `1px solid ${colors.borderPrimary}`,
             p: 2,
             borderRadius: '6px',
             backdropFilter: 'blur(10px)',
             maxWidth: 280,
-            boxShadow: '0 4px 12px rgba(0, 240, 255, 0.1)',
+            boxShadow: `0 4px 12px ${colors.shadowPrimary}`,
           }}
         >
-          <Typography sx={{ color: '#00F0FF', fontWeight: 600, mb: 1 }}>
+          <Typography sx={{ color: colors.primary, fontWeight: 600, mb: 1 }}>
             {data.subject}
           </Typography>
-          <Typography sx={{ color: '#fff', fontSize: '0.9rem', mb: 1 }}>
+          <Typography sx={{ color: colors.textPrimary, fontSize: '0.9rem', mb: 1 }}>
             {fighter.fighterName}: {valueDisplay.fighterValue}
           </Typography>
-          <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.9rem', mb: 1 }}>
+          <Typography sx={{ color: colors.textTertiary, fontSize: '0.9rem', mb: 1 }}>
             Weight Class Avg: {valueDisplay.weightClassValue}
           </Typography>
-          <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.8rem' }}>
+          <Typography sx={{ color: colors.textMuted, fontSize: '0.8rem' }}>
             {data.description}
           </Typography>
         </Box>
@@ -507,18 +508,17 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
 
   // Enhanced Rating Card Stylesheet (matching BasicInfo)
   const ratingCardStyles = {
-    // Collapsible section styles
     collapsibleSection: {
       mb: 4,
       borderRadius: '12px',
-      bgcolor: 'rgba(10, 14, 23, 0.4)',
-      border: '1px solid rgba(0, 240, 255, 0.15)',
+      bgcolor: colors.backgroundTertiary,
+      border: `1px solid ${colors.borderSecondary}`,
       position: 'relative' as const,
       overflow: 'hidden',
       transition: 'all 0.3s ease',
       '&:hover': {
-        bgcolor: 'rgba(10, 14, 23, 0.6)',
-        border: '1px solid rgba(0, 240, 255, 0.3)',
+        bgcolor: colors.backgroundSecondary,
+        border: `1px solid ${colors.borderPrimary}`,
       },
       '&::before': {
         content: '""',
@@ -527,11 +527,10 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
         left: 0,
         right: 0,
         height: '1px',
-        background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+        background: colors.gradientBorder,
         opacity: 0.5,
       }
     },
-
     sectionHeader: {
       p: 3,
       display: 'flex',
@@ -540,38 +539,34 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
       cursor: 'pointer',
       transition: 'all 0.3s ease',
       '&:hover': {
-        bgcolor: 'rgba(0, 240, 255, 0.05)',
+        bgcolor: colors.overlayTertiary,
       }
     },
-
     sectionTitle: {
       display: 'flex',
       alignItems: 'center',
       gap: 1.5,
     },
-
     expandIcon: {
-      color: '#00F0FF',
+      color: colors.primary,
       transition: 'transform 0.3s ease',
       '&.expanded': {
         transform: 'rotate(180deg)',
       }
     },
-
-    // Main card container
     card: {
       p: 3,
       borderRadius: '12px',
-      bgcolor: 'rgba(10, 14, 23, 0.4)',
-      border: '1px solid rgba(0, 240, 255, 0.15)',
+      bgcolor: colors.backgroundTertiary,
+      border: `1px solid ${colors.borderSecondary}`,
       height: '100%',
       position: 'relative' as const,
       overflow: 'hidden',
       transition: 'all 0.3s ease',
       '&:hover': {
-        bgcolor: 'rgba(10, 14, 23, 0.6)',
+        bgcolor: colors.backgroundSecondary,
         transform: 'translateY(-2px)',
-        border: '1px solid rgba(0, 240, 255, 0.3)',
+        border: `1px solid ${colors.borderPrimary}`,
         '& .rating-icon': {
           transform: 'scale(1.1)',
         },
@@ -586,20 +581,16 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
         left: 0,
         right: 0,
         height: '1px',
-        background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+        background: colors.gradientBorder,
         opacity: 0.5,
       }
     },
-
-    // Header section
     header: {
       display: 'flex',
       alignItems: 'center',
       mb: 2,
       gap: 1.5,
     },
-
-    // Icon container
     icon: {
       width: 40,
       height: 40,
@@ -607,46 +598,40 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, rgba(10, 14, 23, 0.9), rgba(10, 14, 23, 0.7))',
-      border: '1px solid rgba(0, 240, 255, 0.2)',
+      background: `linear-gradient(135deg, ${colors.backgroundTertiary}, ${colors.backgroundSecondary})`,
+      border: `1px solid ${colors.borderPrimary}`,
       transition: 'transform 0.3s ease',
     },
-
-    // Title styling
     title: {
-      color: '#fff',
+      color: colors.textPrimary,
       fontWeight: 600,
       fontSize: '1.1rem',
       textTransform: 'uppercase' as const,
       letterSpacing: '0.05em',
     },
-
-    // Overall rating specific styles
     overallCard: {
-      background: 'linear-gradient(145deg, rgba(20, 25, 40, 0.98) 0%, rgba(30, 40, 60, 0.95) 100%)',
-      border: '2px solid rgba(0, 150, 255, 0.3)',
-      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 150, 255, 0.15), 0 0 60px rgba(0, 150, 255, 0.1)',
+      background: colors.gradientPrimary,
+      border: `2px solid ${colors.borderPrimary}`,
+      boxShadow: `0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px ${colors.borderSecondary}, 0 0 60px ${colors.shadowPrimary}`,
       '&:hover': {
-        border: '2px solid rgba(0, 150, 255, 0.5)',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 150, 255, 0.25), 0 0 80px rgba(0, 150, 255, 0.15)',
+        border: `2px solid ${colors.borderPrimary}`,
+        boxShadow: `0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px ${colors.borderPrimary}, 0 0 80px ${colors.shadowSecondary}`,
       }
     },
-
     overallValue: {
       fontSize: { xs: '3.5rem', sm: '4rem' },
       fontWeight: 900,
-      background: 'linear-gradient(135deg, #FFFFFF 0%, #00F0FF 30%, #0096FF 70%, #0066FF 100%)',
+      background: `linear-gradient(135deg, ${colors.textPrimary} 0%, ${colors.primary} 30%, ${colors.primaryDark} 70%, ${colors.primaryDark} 100%)`,
       backgroundClip: 'text',
       WebkitBackgroundClip: 'text',
       WebkitTextFillColor: 'transparent',
-      textShadow: '0 0 40px rgba(255, 255, 255, 0.6)',
+      textShadow: `0 0 40px ${colors.shadowSecondary}`,
       fontFamily: '"Orbitron", "Roboto", sans-serif',
       letterSpacing: '0.15em',
       mb: 1,
     },
-
     overallLabel: {
-      color: '#FFFFFF',
+      color: colors.textPrimary,
       fontSize: '1rem',
       fontWeight: 700,
       textTransform: 'uppercase' as const,
@@ -654,10 +639,8 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
       textAlign: 'center' as const,
       textShadow: '0 2px 8px rgba(0, 0, 0, 0.7)',
     },
-
-    // Description
     description: {
-      color: 'rgba(255, 255, 255, 0.5)',
+      color: colors.textMuted,
       fontSize: '0.9rem',
       mb: 2,
       fontStyle: 'italic',
@@ -997,7 +980,7 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
         borderRadius: '12px',
         position: 'relative',
         overflow: 'hidden',
-        border: '1px solid rgba(0, 240, 255, 0.1)',
+        border: `1px solid ${colors.borderSecondary}`,
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -1005,7 +988,7 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
           left: 0,
           width: '100%',
           height: '3px',
-          background: 'linear-gradient(90deg, #00F0FF, #0066FF)',
+          background: colors.gradientBorder,
         }
       }}
     >
@@ -4415,22 +4398,22 @@ const StrikingInfo: React.FC<StrikingInfoProps> = ({ fighter, weightClassAvgData
                              return (
                                <Box
                                  sx={{
-                                   bgcolor: 'rgba(10, 14, 23, 0.95)',
-                                   border: '1px solid rgba(0, 240, 255, 0.3)',
+                                   bgcolor: colors.backgroundTertiary,
+                                   border: `1px solid ${colors.borderPrimary}`,
                                    p: 2,
                                    borderRadius: '6px',
                                    backdropFilter: 'blur(10px)',
                                    maxWidth: 280,
-                                   boxShadow: '0 4px 12px rgba(0, 240, 255, 0.1)',
+                                   boxShadow: `0 4px 12px ${colors.shadowPrimary}`,
                                  }}
                                >
-                                 <Typography sx={{ color: '#00F0FF', fontWeight: 600, mb: 1 }}>
+                                 <Typography sx={{ color: colors.primary, fontWeight: 600, mb: 1 }}>
                                    {data.strikeType}
                                  </Typography>
-                                 <Typography sx={{ color: '#fff', fontSize: '0.9rem', mb: 1 }}>
+                                 <Typography sx={{ color: colors.textPrimary, fontSize: '0.9rem', mb: 1 }}>
                                    Connection: {data.connectionPercent}%
                                  </Typography>
-                                 <Typography sx={{ color: '#fff', fontSize: '0.9rem', mb: 1 }}>
+                                 <Typography sx={{ color: colors.textTertiary, fontSize: '0.9rem', mb: 1 }}>
                                    Usage: {data.usagePercent}%
                                  </Typography>
 
